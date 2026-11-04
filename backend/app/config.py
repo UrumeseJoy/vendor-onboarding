@@ -8,9 +8,9 @@ from functools import lru_cache
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
-from app.models import Country, DocType, Severity
+from app.models import CHECK_IDS, Country, DocType, Severity
 
 RULES_PATH = Path(__file__).parent / "rules.yaml"
 
@@ -57,7 +57,16 @@ class RulesConfig(BaseModel):
     name_match: NameMatchRules
     extraction: ExtractionRules
     risk: RiskRules
+    check_severity: dict[str, Severity]  # check ID -> how serious a non-pass is
     gst_state_codes: dict[str, str]
+
+    @field_validator("check_severity")
+    @classmethod
+    def _known_check_ids(cls, v):
+        unknown = sorted(set(v) - CHECK_IDS)
+        if unknown:
+            raise ValueError(f"check_severity has unknown check IDs: {unknown}")
+        return v
 
 
 def load_rules(path: Path = RULES_PATH) -> RulesConfig:

@@ -66,6 +66,17 @@ class VendorStatus(str, Enum):
     REJECTED = "REJECTED"
 
 
+# Every check ID in the project (kept in sync with the "Check IDs" section of CLAUDE.md).
+CHECK_IDS = frozenset({
+    "INTAKE_VALID",
+    "DOC_READABLE", "EXTRACTION_CONFIDENCE",
+    "REQUIRED_FIELDS", "REQUIRED_DOCUMENTS", "DOC_TYPE_MATCH",
+    "PAN_FORMAT", "GSTIN_FORMAT", "GSTIN_CHECKSUM", "IFSC_FORMAT", "EIN_FORMAT", "ROUTING_FORMAT",
+    "PAN_IN_GSTIN", "GST_STATE_MATCH", "BANK_NAME_MATCH", "DOC_FIELDS_MATCH",
+    "FREE_EMAIL_DOMAIN", "BANK_COUNTRY_MISMATCH", "DUPLICATE_BANK_ACCOUNT",
+})
+
+
 # ---------- Helpers ----------
 
 def mask_account(number: str) -> str:

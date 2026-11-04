@@ -75,3 +75,8 @@ def test_index_lists_all_cases():
     for entry in index:
         assert (CASES_DIR / entry["case_id"]).is_dir()
         assert entry["expected_status"] == load(entry["case_id"], "expected.json")["expected_status"]
+
+
+def test_check_ids_in_code_match_claude_md():
+    from app.models import CHECK_IDS
+    assert CHECK_IDS == valid_check_ids()

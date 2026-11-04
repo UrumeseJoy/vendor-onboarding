@@ -57,3 +57,17 @@ def test_invalid_file_gives_clear_error(tmp_path):
     bad.write_text(yaml.safe_dump(data))
     with pytest.raises(RulesError, match="min_field_confidence"):
         load_rules(bad)
+
+
+def test_check_severity_unknown_id_rejected():
+    data = raw_rules()
+    data["check_severity"]["NOT_A_CHECK"] = "HARD"
+    with pytest.raises(ValidationError, match="NOT_A_CHECK"):
+        RulesConfig(**data)
+
+
+def test_check_severity_invalid_value_rejected():
+    data = raw_rules()
+    data["check_severity"]["PAN_FORMAT"] = "MEDIUM"
+    with pytest.raises(ValidationError):
+        RulesConfig(**data)
