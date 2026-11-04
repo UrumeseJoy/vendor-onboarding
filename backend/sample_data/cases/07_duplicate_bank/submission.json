@@ -1,0 +1,29 @@
+{
+  "legal_name": "Vellore Traders Pvt Ltd",
+  "country": "IN",
+  "state": "Tamil Nadu",
+  "address": "88 Officers Line, Vellore, Tamil Nadu 632001",
+  "contact_email": "accounts@vellore-traders.in",
+  "pan": "AABCV5678P",
+  "gstin": "33AABCV5678P1ZM",
+  "bank": {
+    "holder_name": "Vellore Traders Private Limited",
+    "account_number": "50200012345678",
+    "ifsc": "HDFC0001234",
+    "bank_country": "IN"
+  },
+  "documents": [
+    {
+      "slot": "GST_CERTIFICATE",
+      "filename": "gst_certificate.pdf"
+    },
+    {
+      "slot": "PAN_CARD",
+      "filename": "pan_card.pdf"
+    },
+    {
+      "slot": "CANCELLED_CHEQUE",
+      "filename": "cancelled_cheque.pdf"
+    }
+  ]
+}

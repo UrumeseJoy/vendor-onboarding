@@ -1,0 +1,8 @@
+{
+  "expected_status": "REJECTED",
+  "expected_failed_checks": [
+    "PAN_IN_GSTIN",
+    "DOC_FIELDS_MATCH"
+  ],
+  "explanation": "The GSTIN is valid but is registered to PAN AABCD5678F, not the PAN AABCD5679G given by the vendor, so the vendor is rejected."
+}

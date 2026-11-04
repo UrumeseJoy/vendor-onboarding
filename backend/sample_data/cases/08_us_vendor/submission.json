@@ -1,0 +1,24 @@
+{
+  "legal_name": "Lakeside Analytics LLC",
+  "country": "US",
+  "state": "Texas",
+  "address": "210 Congress Avenue, Austin, Texas 78701",
+  "contact_email": "finance@lakesideanalytics.com",
+  "ein": "84-1234567",
+  "bank": {
+    "holder_name": "Lakeside Analytics LLC",
+    "account_number": "4412345678",
+    "routing_number": "123456780",
+    "bank_country": "US"
+  },
+  "documents": [
+    {
+      "slot": "W9_FORM",
+      "filename": "w9_form.pdf"
+    },
+    {
+      "slot": "BANK_LETTER",
+      "filename": "bank_letter.pdf"
+    }
+  ]
+}

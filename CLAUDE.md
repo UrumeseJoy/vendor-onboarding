@@ -50,6 +50,15 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 4. Pending vendor resubmits the correct document → re-run on same vendor ID → APPROVED, both runs kept in history
 Backups: blurry scan (low confidence → PENDING); same bank account used by two vendors → REJECTED
 
+## Check IDs
+Every check in the project must use exactly these IDs:
+- INTAKE: INTAKE_VALID
+- EXTRACTION: DOC_READABLE, EXTRACTION_CONFIDENCE
+- COMPLETENESS: REQUIRED_FIELDS, REQUIRED_DOCUMENTS, DOC_TYPE_MATCH (claimed slot vs detected type)
+- FORMAT: PAN_FORMAT, GSTIN_FORMAT, GSTIN_CHECKSUM, IFSC_FORMAT, EIN_FORMAT, ROUTING_FORMAT
+- CROSS_CHECK: PAN_IN_GSTIN, GST_STATE_MATCH, BANK_NAME_MATCH, DOC_FIELDS_MATCH
+- RISK: FREE_EMAIL_DOMAIN, BANK_COUNTRY_MISMATCH, DUPLICATE_BANK_ACCOUNT
+
 ## Tech stack
 - Backend: FastAPI, Pydantic, SQLModel (SQLite locally, Postgres when deployed), sse-starlette for live stage streaming
 - PDFs: PyMuPDF / pdfplumber for text, Gemini for scanned images and structured extraction

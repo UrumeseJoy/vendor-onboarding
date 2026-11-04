@@ -1,0 +1,6 @@
+{
+  "expected_status": "APPROVED",
+  "expected_failed_checks": [],
+  "resubmission_of": "04_wrong_document",
+  "explanation": "The vendor re-uploaded the correct GST certificate and everything now checks out, so the vendor is approved."
+}

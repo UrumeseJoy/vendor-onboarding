@@ -1,0 +1,5 @@
+{
+  "expected_status": "APPROVED",
+  "expected_failed_checks": [],
+  "explanation": "Every field and document is valid and consistent, so the vendor is approved."
+}

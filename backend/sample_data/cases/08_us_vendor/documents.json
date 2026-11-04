@@ -1,0 +1,36 @@
+[
+  {
+    "filename": "w9_form.pdf",
+    "slot": "W9_FORM",
+    "actual_type": "W9_FORM",
+    "quality": "clean",
+    "fields": {
+      "legal_name": "Lakeside Analytics LLC",
+      "ein": "84-1234567",
+      "address": "210 Congress Avenue, Austin, Texas 78701"
+    },
+    "mock_confidence": {
+      "legal_name": 0.99,
+      "ein": 0.98,
+      "address": 0.97
+    }
+  },
+  {
+    "filename": "bank_letter.pdf",
+    "slot": "BANK_LETTER",
+    "actual_type": "BANK_LETTER",
+    "quality": "clean",
+    "fields": {
+      "holder_name": "Lakeside Analytics LLC",
+      "account_number": "4412345678",
+      "routing_number": "123456780",
+      "bank_name": "Capital Bank of Texas"
+    },
+    "mock_confidence": {
+      "holder_name": 0.99,
+      "account_number": 0.98,
+      "routing_number": 0.97,
+      "bank_name": 0.96
+    }
+  }
+]

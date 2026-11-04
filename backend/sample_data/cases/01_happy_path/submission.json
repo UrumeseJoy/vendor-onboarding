@@ -1,0 +1,29 @@
+{
+  "legal_name": "Sharma Electronics Pvt Ltd",
+  "country": "IN",
+  "state": "Tamil Nadu",
+  "address": "14 Anna Salai, Chennai, Tamil Nadu 600002",
+  "contact_email": "accounts@sharmaelectronics.in",
+  "pan": "AABCS1234K",
+  "gstin": "33AABCS1234K1ZN",
+  "bank": {
+    "holder_name": "Sharma Electronics Private Limited",
+    "account_number": "50200012345678",
+    "ifsc": "HDFC0001234",
+    "bank_country": "IN"
+  },
+  "documents": [
+    {
+      "slot": "GST_CERTIFICATE",
+      "filename": "gst_certificate.pdf"
+    },
+    {
+      "slot": "PAN_CARD",
+      "filename": "pan_card.pdf"
+    },
+    {
+      "slot": "CANCELLED_CHEQUE",
+      "filename": "cancelled_cheque.pdf"
+    }
+  ]
+}

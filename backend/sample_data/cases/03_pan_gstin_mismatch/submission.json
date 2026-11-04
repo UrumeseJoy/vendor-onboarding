@@ -1,0 +1,29 @@
+{
+  "legal_name": "Deccan Steel Works Pvt Ltd",
+  "country": "IN",
+  "state": "Karnataka",
+  "address": "27 Residency Road, Bengaluru, Karnataka 560001",
+  "contact_email": "accounts@deccansteelworks.in",
+  "pan": "AABCD5679G",
+  "gstin": "29AABCD5678F1ZE",
+  "bank": {
+    "holder_name": "Deccan Steel Works Private Limited",
+    "account_number": "00110200456789",
+    "ifsc": "SBIN0004567",
+    "bank_country": "IN"
+  },
+  "documents": [
+    {
+      "slot": "GST_CERTIFICATE",
+      "filename": "gst_certificate.pdf"
+    },
+    {
+      "slot": "PAN_CARD",
+      "filename": "pan_card.pdf"
+    },
+    {
+      "slot": "CANCELLED_CHEQUE",
+      "filename": "cancelled_cheque.pdf"
+    }
+  ]
+}

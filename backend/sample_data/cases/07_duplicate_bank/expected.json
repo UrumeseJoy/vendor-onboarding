@@ -1,0 +1,10 @@
+{
+  "expected_status": "REJECTED",
+  "expected_failed_checks": [
+    "DUPLICATE_BANK_ACCOUNT"
+  ],
+  "requires_prior_cases": [
+    "01_happy_path"
+  ],
+  "explanation": "This bank account is already registered to another vendor (Sharma Electronics), so the vendor is rejected as a possible duplicate or fraud."
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "case_id": "01_happy_path",
+    "title": "Clean vendor",
+    "description": "Sharma Electronics: everything valid and consistent.",
+    "expected_status": "APPROVED"
+  },
+  {
+    "case_id": "02_bank_name_mismatch",
+    "title": "Bank account in someone else's name",
+    "description": "Kaveri Textiles: cheque and form show bank holder 'Ramesh Kumar'.",
+    "expected_status": "REJECTED"
+  },
+  {
+    "case_id": "03_pan_gstin_mismatch",
+    "title": "GSTIN belongs to a different PAN",
+    "description": "Deccan Steel Works: valid GSTIN, but the PAN inside it differs from the PAN given.",
+    "expected_status": "REJECTED"
+  },
+  {
+    "case_id": "04_wrong_document",
+    "title": "Wrong document uploaded",
+    "description": "Malabar Spices: an invoice was uploaded in the GST certificate slot.",
+    "expected_status": "PENDING"
+  },
+  {
+    "case_id": "05_resubmission",
+    "title": "Vendor fixes and resubmits",
+    "description": "Malabar Spices resubmits with the correct GST certificate.",
+    "expected_status": "APPROVED"
+  },
+  {
+    "case_id": "06_blurry_scan",
+    "title": "Blurry cheque scan",
+    "description": "Coromandel Packaging: the cancelled cheque cannot be read with enough confidence.",
+    "expected_status": "PENDING"
+  },
+  {
+    "case_id": "07_duplicate_bank",
+    "title": "Bank account already used",
+    "description": "Vellore Traders: same bank account as Sharma Electronics (run after case 01).",
+    "expected_status": "REJECTED"
+  },
+  {
+    "case_id": "08_us_vendor",
+    "title": "US vendor",
+    "description": "Lakeside Analytics LLC, Austin: W-9 and bank letter, all valid.",
+    "expected_status": "APPROVED"
+  }
+]

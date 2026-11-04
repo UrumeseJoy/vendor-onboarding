@@ -1,0 +1,29 @@
+{
+  "legal_name": "Kaveri Textiles Pvt Ltd",
+  "country": "IN",
+  "state": "Tamil Nadu",
+  "address": "72 Avinashi Road, Coimbatore, Tamil Nadu 641001",
+  "contact_email": "finance@kaveritextiles.in",
+  "pan": "AABCK2345L",
+  "gstin": "33AABCK2345L1ZN",
+  "bank": {
+    "holder_name": "Ramesh Kumar",
+    "account_number": "31450098765432",
+    "ifsc": "ICIC0002345",
+    "bank_country": "IN"
+  },
+  "documents": [
+    {
+      "slot": "GST_CERTIFICATE",
+      "filename": "gst_certificate.pdf"
+    },
+    {
+      "slot": "PAN_CARD",
+      "filename": "pan_card.pdf"
+    },
+    {
+      "slot": "CANCELLED_CHEQUE",
+      "filename": "cancelled_cheque.pdf"
+    }
+  ]
+}

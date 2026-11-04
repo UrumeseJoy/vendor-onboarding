@@ -1,0 +1,29 @@
+{
+  "legal_name": "Coromandel Packaging Pvt Ltd",
+  "country": "IN",
+  "state": "Tamil Nadu",
+  "address": "5 West Masi Street, Madurai, Tamil Nadu 625001",
+  "contact_email": "accounts@coromandelpackaging.in",
+  "pan": "AABCC4567N",
+  "gstin": "33AABCC4567N1ZF",
+  "bank": {
+    "holder_name": "Coromandel Packaging Private Limited",
+    "account_number": "91220045678901",
+    "ifsc": "HDFC0001234",
+    "bank_country": "IN"
+  },
+  "documents": [
+    {
+      "slot": "GST_CERTIFICATE",
+      "filename": "gst_certificate.pdf"
+    },
+    {
+      "slot": "PAN_CARD",
+      "filename": "pan_card.pdf"
+    },
+    {
+      "slot": "CANCELLED_CHEQUE",
+      "filename": "cancelled_cheque.pdf"
+    }
+  ]
+}

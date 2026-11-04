@@ -1,0 +1,29 @@
+{
+  "legal_name": "Malabar Spices Pvt Ltd",
+  "country": "IN",
+  "state": "Kerala",
+  "address": "9 MG Road, Kochi, Kerala 682001",
+  "contact_email": "accounts@malabarspices.in",
+  "pan": "AABCM3456M",
+  "gstin": "32AABCM3456M1ZF",
+  "bank": {
+    "holder_name": "Malabar Spices Private Limited",
+    "account_number": "67120034567890",
+    "ifsc": "ICIC0002345",
+    "bank_country": "IN"
+  },
+  "documents": [
+    {
+      "slot": "GST_CERTIFICATE",
+      "filename": "gst_certificate.pdf"
+    },
+    {
+      "slot": "PAN_CARD",
+      "filename": "pan_card.pdf"
+    },
+    {
+      "slot": "CANCELLED_CHEQUE",
+      "filename": "cancelled_cheque.pdf"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "filename": "gst_certificate.pdf",
+    "slot": "GST_CERTIFICATE",
+    "actual_type": "INVOICE",
+    "quality": "clean",
+    "fields": {
+      "invoice_number": "INV-2026-0457",
+      "invoice_date": "2026-03-14",
+      "total_amount": "INR 1,18,000.00",
+      "buyer_name": "Greenfield Retail Private Limited"
+    },
+    "mock_confidence": {
+      "invoice_number": 0.99,
+      "invoice_date": 0.98,
+      "total_amount": 0.97,
+      "buyer_name": 0.96
+    }
+  },
+  {
+    "filename": "pan_card.pdf",
+    "slot": "PAN_CARD",
+    "actual_type": "PAN_CARD",
+    "quality": "clean",
+    "fields": {
+      "legal_name": "Malabar Spices Private Limited",
+      "pan": "AABCM3456M"
+    },
+    "mock_confidence": {
+      "legal_name": 0.99,
+      "pan": 0.98
+    }
+  },
+  {
+    "filename": "cancelled_cheque.pdf",
+    "slot": "CANCELLED_CHEQUE",
+    "actual_type": "CANCELLED_CHEQUE",
+    "quality": "clean",
+    "fields": {
+      "holder_name": "Malabar Spices Private Limited",
+      "account_number": "67120034567890",
+      "ifsc": "ICIC0002345",
+      "bank_name": "ICICI Bank"
+    },
+    "mock_confidence": {
+      "holder_name": 0.99,
+      "account_number": 0.98,
+      "ifsc": 0.97,
+      "bank_name": 0.96
+    }
+  }
+]

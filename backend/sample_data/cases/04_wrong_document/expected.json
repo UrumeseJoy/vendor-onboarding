@@ -1,0 +1,8 @@
+{
+  "expected_status": "PENDING",
+  "expected_failed_checks": [
+    "DOC_TYPE_MATCH",
+    "REQUIRED_DOCUMENTS"
+  ],
+  "explanation": "The file uploaded as the GST certificate is actually an invoice, so the vendor is asked to upload the real certificate."
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "filename": "gst_certificate.pdf",
+    "slot": "GST_CERTIFICATE",
+    "actual_type": "GST_CERTIFICATE",
+    "quality": "clean",
+    "fields": {
+      "legal_name": "Vellore Traders Private Limited",
+      "gstin": "33AABCV5678P1ZM",
+      "pan": "AABCV5678P",
+      "address": "88 Officers Line, Vellore, Tamil Nadu 632001"
+    },
+    "mock_confidence": {
+      "legal_name": 0.99,
+      "gstin": 0.98,
+      "pan": 0.97,
+      "address": 0.96
+    }
+  },
+  {
+    "filename": "pan_card.pdf",
+    "slot": "PAN_CARD",
+    "actual_type": "PAN_CARD",
+    "quality": "clean",
+    "fields": {
+      "legal_name": "Vellore Traders Private Limited",
+      "pan": "AABCV5678P"
+    },
+    "mock_confidence": {
+      "legal_name": 0.99,
+      "pan": 0.98
+    }
+  },
+  {
+    "filename": "cancelled_cheque.pdf",
+    "slot": "CANCELLED_CHEQUE",
+    "actual_type": "CANCELLED_CHEQUE",
+    "quality": "clean",
+    "fields": {
+      "holder_name": "Vellore Traders Private Limited",
+      "account_number": "50200012345678",
+      "ifsc": "HDFC0001234",
+      "bank_name": "HDFC Bank"
+    },
+    "mock_confidence": {
+      "holder_name": 0.99,
+      "account_number": 0.98,
+      "ifsc": 0.97,
+      "bank_name": 0.96
+    }
+  }
+]

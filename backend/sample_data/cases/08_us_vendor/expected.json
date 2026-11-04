@@ -1,0 +1,5 @@
+{
+  "expected_status": "APPROVED",
+  "expected_failed_checks": [],
+  "explanation": "A US vendor with a valid EIN, a valid routing number and a W-9 and bank letter that match the form is approved."
+}

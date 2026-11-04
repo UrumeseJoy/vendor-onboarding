@@ -1,0 +1,7 @@
+{
+  "expected_status": "REJECTED",
+  "expected_failed_checks": [
+    "BANK_NAME_MATCH"
+  ],
+  "explanation": "The bank account belongs to Ramesh Kumar, an individual, not the company, so the vendor is rejected."
+}

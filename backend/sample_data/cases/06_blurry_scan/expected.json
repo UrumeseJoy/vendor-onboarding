@@ -1,0 +1,7 @@
+{
+  "expected_status": "PENDING",
+  "expected_failed_checks": [
+    "EXTRACTION_CONFIDENCE"
+  ],
+  "explanation": "The cancelled cheque scan is too blurry to read the account number and IFSC reliably, so the vendor is asked for a clearer copy."
+}
