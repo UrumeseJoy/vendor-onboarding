@@ -17,6 +17,8 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 6. Mask bank account numbers in the UI and logs (show only last 4 digits).
 7. Thresholds and required documents live in backend/app/rules.yaml, not hard-coded.
 8. Import PyMuPDF as `import pymupdf` (not `import fitz`).
+9. Every FAIL or WARN the vendor can fix must include details['action_required']: one plain-English instruction to the vendor (e.g. 'Please upload a clearer photo of your cancelled cheque.'). Vendor emails are built from these.
+10. Fields with confidence below min_field_confidence are untrusted. Later checks must skip untrusted fields rather than report them as mismatches.
 
 ## Assumptions
 - Buyer is an Indian mid-size company. Vendors are from India (main) or USA.
@@ -32,7 +34,7 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 4. Format checks — PAN, GSTIN (+ checksum), IFSC, US EIN, US routing number
 5. Cross-checks — PAN inside GSTIN, GST state code vs address state, fuzzy name match (form vs bank holder vs documents), document fields vs form fields
 6. Risk flags — free email domain, bank country differs from company country, bank account already used by another vendor
-7. Decision — any HARD fail → REJECTED; else any SOFT fail or WARN needing action → PENDING; else APPROVED
+7. Decision — severity applies only to FAIL results. Any HARD FAIL → REJECTED. Otherwise any SOFT FAIL or any WARN → PENDING. Otherwise → APPROVED. A WARN never rejects; it means 'a human should review this'.
 8. Vendor message — Gemini drafts an email listing exactly what to fix (or a welcome email)
 
 ## Key rules

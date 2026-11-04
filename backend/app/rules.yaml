@@ -54,6 +54,11 @@ risk:
 # SOFT = fixable (the vendor is put on hold, PENDING, and asked to correct it).
 # A check with no entry here is an error, so nothing is ever treated as serious or minor by accident.
 check_severity:
+  DOC_READABLE: SOFT
+  EXTRACTION_CONFIDENCE: SOFT
+  REQUIRED_FIELDS: SOFT
+  REQUIRED_DOCUMENTS: SOFT
+  DOC_TYPE_MATCH: SOFT
   PAN_FORMAT: HARD
   GSTIN_FORMAT: HARD
   GSTIN_CHECKSUM: HARD
