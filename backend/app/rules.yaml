@@ -1,0 +1,89 @@
+# Vendor onboarding rules.
+# All business settings live here, so they can be reviewed and changed
+# without touching code.
+
+# Form fields a vendor MUST fill in, per country.
+# "bank.xyz" means the field xyz inside the bank details section.
+required_fields:
+  IN: [legal_name, state, address, contact_email, pan, gstin, bank.holder_name, bank.account_number, bank.ifsc]
+  US: [legal_name, state, address, contact_email, ein, bank.holder_name, bank.account_number, bank.routing_number]
+
+# Documents a vendor MUST upload, per country.
+# Each inner list is one requirement: at least ONE document type from that list must be present.
+# Example: India needs a GST certificate, a PAN card, and (a cancelled cheque OR a bank letter).
+required_documents:
+  IN: [[GST_CERTIFICATE], [PAN_CARD], [CANCELLED_CHEQUE, BANK_LETTER]]
+  US: [[W9_FORM], [BANK_LETTER]]
+
+# How closely two company names must match (score 0-100).
+# At or above pass_threshold: names match.
+# Between warn_threshold and pass_threshold: warning, a person must look (vendor stays PENDING).
+# Below warn_threshold: names do not match (REJECTED).
+name_match:
+  pass_threshold: 90
+  warn_threshold: 75
+  # Before comparing, names are lowercased, punctuation is removed, and these
+  # short forms are replaced by their long forms (so "Pvt Ltd" equals "Private Limited").
+  normalise:
+    "pvt": "private"
+    "ltd": "limited"
+    "co": "company"
+    "corp": "corporation"
+    "inc": "incorporated"
+    "llp": "limited liability partnership"
+    "&": "and"
+
+# How sure the document reader must be before we trust what it read (0 to 1).
+# Anything below these levels is never trusted and the vendor is asked for a clearer document.
+extraction:
+  min_field_confidence: 0.80      # for each individual field
+  min_document_confidence: 0.70   # for the document as a whole
+
+# Risk signals. Each flag has a severity (HARD = reject, SOFT = needs follow-up)
+# and a score added to the vendor's risk score (total capped at 100).
+risk:
+  # Email domains used by individuals rather than companies.
+  free_email_domains: [gmail.com, yahoo.com, yahoo.co.in, hotmail.com, outlook.com, rediffmail.com, proton.me, icloud.com]
+  flags:
+    FREE_EMAIL_DOMAIN: {severity: SOFT, score: 15}        # contact email is a free personal address
+    BANK_COUNTRY_MISMATCH: {severity: SOFT, score: 30}    # bank is in a different country than the company
+    DUPLICATE_BANK_ACCOUNT: {severity: HARD, score: 100}  # same bank account already used by another vendor
+
+# Official GST state codes. The first two digits of a GSTIN identify the state of registration.
+gst_state_codes:
+  "01": Jammu and Kashmir
+  "02": Himachal Pradesh
+  "03": Punjab
+  "04": Chandigarh
+  "05": Uttarakhand
+  "06": Haryana
+  "07": Delhi
+  "08": Rajasthan
+  "09": Uttar Pradesh
+  "10": Bihar
+  "11": Sikkim
+  "12": Arunachal Pradesh
+  "13": Nagaland
+  "14": Manipur
+  "15": Mizoram
+  "16": Tripura
+  "17": Meghalaya
+  "18": Assam
+  "19": West Bengal
+  "20": Jharkhand
+  "21": Odisha
+  "22": Chhattisgarh
+  "23": Madhya Pradesh
+  "24": Gujarat
+  "26": Dadra and Nagar Haveli and Daman and Diu
+  "27": Maharashtra
+  "29": Karnataka
+  "30": Goa
+  "31": Lakshadweep
+  "32": Kerala
+  "33": Tamil Nadu
+  "34": Puducherry
+  "35": Andaman and Nicobar Islands
+  "36": Telangana
+  "37": Andhra Pradesh
+  "38": Ladakh
