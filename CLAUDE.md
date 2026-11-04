@@ -19,6 +19,8 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 8. Import PyMuPDF as `import pymupdf` (not `import fitz`).
 9. Every FAIL or WARN the vendor can fix must include details['action_required']: one plain-English instruction to the vendor (e.g. 'Please upload a clearer photo of your cancelled cheque.'). Vendor emails are built from these.
 10. Fields with confidence below min_field_confidence are untrusted. Later checks must skip untrusted fields rather than report them as mismatches.
+11. Fail safe: if any stage raises an error, that stage is marked FAILED with the error summary, the remaining stages still run where possible, and the final status can never be APPROVED — it becomes PENDING for manual review.
+12. Vendor-facing text comes only from action_required. Reasons and review_note are internal and must never be sent to the vendor.
 
 ## Assumptions
 - Buyer is an Indian mid-size company. Vendors are from India (main) or USA.

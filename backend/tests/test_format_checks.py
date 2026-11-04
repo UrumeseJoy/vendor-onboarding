@@ -111,5 +111,5 @@ def test_sample_cases_have_no_format_failures(case_id):
 
 # ---- make_check ----
 def test_make_check_requires_configured_severity():
-    with pytest.raises(MissingSeverityError, match="INTAKE_VALID"):
-        make_check("INTAKE_VALID", Stage.INTAKE, CheckResult.PASS, "ok")
+    with pytest.raises(MissingSeverityError, match="NOT_A_REAL_CHECK"):
+        make_check("NOT_A_REAL_CHECK", Stage.INTAKE, CheckResult.PASS, "ok")

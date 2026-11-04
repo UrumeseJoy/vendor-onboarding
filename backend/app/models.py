@@ -206,3 +206,16 @@ class Decision(BaseModel):
     missing_items: list[str] = Field(default_factory=list)  # what the vendor must provide/fix
     risk_score: int = Field(ge=0, le=100)
     decided_by: str = "rules_v1"
+    review_notes: list[str] = Field(default_factory=list)  # internal only, never sent to the vendor
+    checks_summary: dict[str, int] = Field(default_factory=dict)  # counts of PASS / FAIL / WARN
+
+
+class PipelineRun(BaseModel):
+    """One complete run of the pipeline for a vendor: every stage result plus the decision."""
+    run_id: str
+    vendor_id: str
+    started_at: datetime
+    finished_at: datetime | None = None
+    stages: list[StageResult] = Field(default_factory=list)
+    decision: Decision | None = None
+    had_errors: bool = False
