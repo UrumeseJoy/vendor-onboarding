@@ -17,8 +17,24 @@ def normalise_name(name: str) -> str:
     if "&" in abbreviations:
         text = text.replace("&", f" {abbreviations['&']} ")
     text = re.sub(r"[^\w\s]", " ", text)  # punctuation becomes a space, so "Pvt.Ltd." still splits
-    words = text.split()                  # split() also collapses repeated spaces
-    return " ".join(abbreviations.get(word, word) for word in words)
+    words = [abbreviations.get(word, word) for word in text.split()]  # split() collapses spaces
+    return " ".join(_join_initials(words))
+
+
+def _join_initials(words: list[str]) -> list[str]:
+    """Join runs of 2+ single-letter words: ['s', 'k', 'traders'] -> ['sk', 'traders'],
+    so initials written with dots ("S.K.") match initials written without ("SK")."""
+    joined, run = [], []
+    for word in words + [""]:  # the empty sentinel flushes a run at the end
+        if len(word) == 1:
+            run.append(word)
+            continue
+        if run:
+            joined.append("".join(run))  # a run of one is left as it was
+            run = []
+        if word:
+            joined.append(word)
+    return joined
 
 
 def name_score(a: str, b: str) -> int:

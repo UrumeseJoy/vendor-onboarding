@@ -123,3 +123,8 @@ def test_kerala_address_with_tamil_nadu_gstin():
     r = find(run_cross_checks(sub.model_copy(update={"state": "Kerala"}), docs), "GST_STATE_MATCH")[0]
     assert r.result == CheckResult.FAIL
     assert r.details["action_required"]
+
+
+def test_initials_with_and_without_dots_match():
+    assert name_score("S.K. Traders", "SK Traders") == 100
+    assert name_score("S. K. Traders Pvt Ltd", "SK Traders Private Limited") == 100

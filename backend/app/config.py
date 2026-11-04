@@ -47,6 +47,7 @@ class RiskFlagRule(BaseModel):
 class RiskRules(BaseModel):
     """Free-email domain list and the risk flags."""
     free_email_domains: list[str]
+    review_threshold: int = Field(ge=0, le=100)  # risk score at which a vendor goes to review
     flags: dict[str, RiskFlagRule]
 
 
@@ -59,6 +60,15 @@ class RulesConfig(BaseModel):
     risk: RiskRules
     check_severity: dict[str, Severity]  # check ID -> how serious a non-pass is
     gst_state_codes: dict[str, str]
+
+    @model_validator(mode="after")
+    def _risk_flags_agree_with_check_severity(self):
+        for flag, rule in self.risk.flags.items():
+            if self.check_severity.get(flag) != rule.severity:
+                raise ValueError(
+                    f"risk flag {flag} has severity {rule.severity.value} in risk.flags but "
+                    f"{getattr(self.check_severity.get(flag), 'value', None)} in check_severity")
+        return self
 
     @field_validator("check_severity")
     @classmethod

@@ -34,7 +34,7 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 4. Format checks — PAN, GSTIN (+ checksum), IFSC, US EIN, US routing number
 5. Cross-checks — PAN inside GSTIN, GST state code vs address state, fuzzy name match (form vs bank holder vs documents), document fields vs form fields
 6. Risk flags — free email domain, bank country differs from company country, bank account already used by another vendor
-7. Decision — severity applies only to FAIL results. Any HARD FAIL → REJECTED. Otherwise any SOFT FAIL or any WARN → PENDING. Otherwise → APPROVED. A WARN never rejects; it means 'a human should review this'.
+7. Decision — severity applies only to FAIL results. Any HARD FAIL (any stage) → REJECTED. SOFT FAILs in the RISK stage do NOT individually cause PENDING; they add their score to risk_score (capped at 100), and risk_score ≥ risk.review_threshold → PENDING. Any other SOFT FAIL or any WARN → PENDING. Otherwise → APPROVED. A WARN never rejects.
 8. Vendor message — Gemini drafts an email listing exactly what to fix (or a welcome email)
 
 ## Key rules

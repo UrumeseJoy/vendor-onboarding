@@ -155,6 +155,15 @@ class VendorSubmission(BaseModel):
         return v.strip().upper() if isinstance(v, str) else v
 
 
+class KnownAccount(BaseModel):
+    """A bank account already on file for an existing vendor (used to spot duplicates)."""
+    vendor_id: str
+    legal_name: str
+    account_number: str
+    ifsc: str | None = None
+    routing_number: str | None = None
+
+
 # ---------- Extraction models ----------
 
 class ExtractedDocument(BaseModel):
