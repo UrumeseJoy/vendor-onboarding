@@ -21,6 +21,7 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 10. Fields with confidence below min_field_confidence are untrusted. Later checks must skip untrusted fields rather than report them as mismatches.
 11. Fail safe: if any stage raises an error, that stage is marked FAILED with the error summary, the remaining stages still run where possible, and the final status can never be APPROVED — it becomes PENDING for manual review.
 12. Vendor-facing text comes only from action_required. Reasons and review_note are internal and must never be sent to the vendor.
+13. Full bank account numbers are never stored. Duplicate detection uses keyed fingerprints (security.py). Stored submissions keep only the last 4 digits.
 
 ## Assumptions
 - Buyer is an Indian mid-size company. Vendors are from India (main) or USA.

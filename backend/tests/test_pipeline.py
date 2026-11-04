@@ -53,8 +53,8 @@ def test_case_01_approved_all_stages_passed():
 def test_case_04_pending_asks_for_gst_certificate():
     d = run_demo_case("04_wrong_document").decision
     assert d.status == VendorStatus.PENDING
-    assert any("GST registration certificate" in item for item in d.missing_items)
-    assert len(d.missing_items) == len(set(d.missing_items))
+    assert d.missing_items == [
+        "Please upload your GST registration certificate (Form GST REG-06) in place of gst_certificate.pdf."]
 
 
 def test_case_02_rejected_with_review_notes():

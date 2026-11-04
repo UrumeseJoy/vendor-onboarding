@@ -27,6 +27,8 @@ def find(results, check_id, filename=None):
 def assert_fails_have_action(results):
     for r in results:
         if r.result == CheckResult.FAIL:
+            if r.details.get("covered_by_doc_type_match"):
+                continue  # documented exception: the DOC_TYPE_MATCH instruction covers it
             assert r.details.get("action_required"), f"{r.check_id} has no action_required"
 
 
@@ -51,6 +53,9 @@ def test_case_04_wrong_document():
     missing = find(results, "REQUIRED_DOCUMENTS")[0]
     assert missing.result == CheckResult.FAIL
     assert "GST registration certificate" in missing.reason
+    # the wrong file is covered by DOC_TYPE_MATCH, so REQUIRED_DOCUMENTS does not ask a second time
+    assert "action_required" not in missing.details and missing.details["covered_by_doc_type_match"]
+    assert mismatch.details["action_required"]
     assert_fails_have_action(results)
 
 
@@ -100,3 +105,12 @@ def test_file_missing_from_documents_json_is_unknown_and_unreadable():
     r = find(results, "DOC_READABLE", "mystery.pdf")[0]
     assert r.result == CheckResult.FAIL
     assert_fails_have_action(results)
+
+
+def test_document_never_uploaded_still_gets_its_own_instruction():
+    _, sub, docs = load_case("01_happy_path")
+    docs = [d for d in docs if d.slot != DocType.GST_CERTIFICATE]
+    r = find(run_completeness_checks(sub, docs), "REQUIRED_DOCUMENTS")[0]
+    assert r.result == CheckResult.FAIL
+    assert "GST registration certificate" in r.details["action_required"]
+    assert "covered_by_doc_type_match" not in r.details

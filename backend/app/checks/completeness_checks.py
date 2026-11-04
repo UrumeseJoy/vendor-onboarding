@@ -32,11 +32,19 @@ def check_required_documents(submission: VendorSubmission, docs: list[ExtractedD
     unmet = [group for group in groups if not detected & set(group)]
     if unmet:
         missing = [" or ".join(doc_label(t) for t in group) for group in unmet]
-        to_upload = [" or ".join(action_label(t) for t in group) for group in unmet]
-        return make_check(
-            "REQUIRED_DOCUMENTS", Stage.COMPLETENESS, CheckResult.FAIL,
-            f"Required documents are missing: {'; '.join(missing)}.",
-            {"missing_documents": missing, "action_required": f"Please upload: {'; '.join(to_upload)}."})
+        # A group is "covered" if the vendor uploaded a file for that slot but it turned out to be
+        # something else. DOC_TYPE_MATCH already tells the vendor what to do about that file, so
+        # we do not ask a second time.
+        wrongly_filled = {d.slot for d in docs if d.detected_type != d.slot}
+        uncovered = [group for group in unmet if not wrongly_filled & set(group)]
+        details = {"missing_documents": missing}
+        if uncovered:
+            to_upload = [" or ".join(action_label(t) for t in group) for group in uncovered]
+            details["action_required"] = f"Please upload: {'; '.join(to_upload)}."
+        else:
+            details["covered_by_doc_type_match"] = True
+        return make_check("REQUIRED_DOCUMENTS", Stage.COMPLETENESS, CheckResult.FAIL,
+                          f"Required documents are missing: {'; '.join(missing)}.", details)
     return make_check("REQUIRED_DOCUMENTS", Stage.COMPLETENESS, CheckResult.PASS,
                       "All required documents were provided.")
 

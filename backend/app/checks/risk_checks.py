@@ -6,17 +6,14 @@ known_accounts is passed in (the pipeline supplies it later); this module reads 
 
 from app.checks.base import make_check
 from app.config import get_rules
-from app.models import CheckOutcome, CheckResult, Country, KnownAccount, Stage, VendorSubmission, mask_account
+from app.security import submission_fingerprint
+from app.models import CheckOutcome, CheckResult, KnownAccount, Stage, VendorSubmission, mask_account
 
 
 def _risk(check_id, result, reason, **details) -> CheckOutcome:
     if result == CheckResult.FAIL:
         details["score"] = get_rules().risk.flags[check_id].score
     return make_check(check_id, Stage.RISK, result, reason, details)
-
-
-def _squash(value: str | None) -> str:
-    return (value or "").replace(" ", "").upper()
 
 
 def check_free_email(email: str) -> CheckOutcome:
@@ -44,17 +41,12 @@ def check_bank_country(submission: VendorSubmission) -> CheckOutcome:
 
 def check_duplicate_account(submission: VendorSubmission, vendor_id: str,
                             known_accounts: list[KnownAccount]) -> CheckOutcome:
-    bank = submission.bank
-    account = _squash(bank.account_number)
-    is_india = submission.country == Country.IN
-    branch = _squash(bank.ifsc if is_india else bank.routing_number)  # IFSC (India) or routing (US)
-
+    fingerprint = submission_fingerprint(submission)  # account number + IFSC (India) or routing (US)
     for known in known_accounts:
         if known.vendor_id == vendor_id:
             continue  # a resubmission must not match itself
-        known_branch = _squash(known.ifsc if is_india else known.routing_number)
-        if _squash(known.account_number) == account and known_branch == branch:
-            masked = mask_account(bank.account_number)
+        if known.account_fingerprint == fingerprint:
+            masked = mask_account(submission.bank.account_number)
             return _risk(
                 "DUPLICATE_BANK_ACCOUNT", CheckResult.FAIL,
                 f"The bank account {masked} is already registered to another vendor, "

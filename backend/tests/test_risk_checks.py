@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from app.config import RulesConfig
 from app.checks.risk_checks import compute_risk_score, run_risk_checks
+from app.security import account_fingerprint, bank_code_for, last4
 from app.models import CheckResult, Country, KnownAccount, Severity, VendorSubmission
 from tests.test_config import raw_rules
 
@@ -16,10 +17,13 @@ def load_sub(case_id: str) -> VendorSubmission:
     return VendorSubmission(**json.loads((CASES_DIR / case_id / "submission.json").read_text()))
 
 
-def known_from(case_id: str, vendor_id: str) -> KnownAccount:
+def known_from(case_id: str, vendor_id: str, bank_code: str | None = None) -> KnownAccount:
+    """A known account for a case's bank account. bank_code overrides the IFSC/routing number."""
     sub = load_sub(case_id)
-    return KnownAccount(vendor_id=vendor_id, legal_name=sub.legal_name, account_number=sub.bank.account_number,
-                        ifsc=sub.bank.ifsc, routing_number=sub.bank.routing_number)
+    code = bank_code if bank_code is not None else bank_code_for(sub)
+    return KnownAccount(vendor_id=vendor_id, legal_name=sub.legal_name,
+                        account_fingerprint=account_fingerprint(sub.bank.account_number, code),
+                        account_last4=last4(sub.bank.account_number))
 
 
 def by_id(results, check_id):
@@ -72,7 +76,7 @@ def test_resubmission_does_not_match_itself():
 
 
 def test_same_account_different_ifsc_passes():
-    known = known_from("01_happy_path", "VND-2026-0001").model_copy(update={"ifsc": "ICIC0002345"})
+    known = known_from("01_happy_path", "VND-2026-0001", bank_code="ICIC0002345")
     results = run_risk_checks(load_sub("07_duplicate_bank"), "VND-2026-0007", [known])
     assert by_id(results, "DUPLICATE_BANK_ACCOUNT").result == CheckResult.PASS
 
@@ -81,7 +85,7 @@ def test_us_duplicate_uses_routing_number():
     sub = load_sub("08_us_vendor")
     known = known_from("08_us_vendor", "VND-2026-0008")
     assert by_id(run_risk_checks(sub, "VND-2026-0009", [known]), "DUPLICATE_BANK_ACCOUNT").result == CheckResult.FAIL
-    other_bank = known.model_copy(update={"routing_number": "021000021"})
+    other_bank = known_from("08_us_vendor", "VND-2026-0008", bank_code="021000021")
     assert by_id(run_risk_checks(sub, "VND-2026-0009", [other_bank]), "DUPLICATE_BANK_ACCOUNT").result == CheckResult.PASS
 
 
@@ -105,3 +109,18 @@ def test_review_threshold_must_be_0_to_100():
     data["risk"]["review_threshold"] = 150
     with pytest.raises(ValidationError):
         RulesConfig(**data)
+
+
+def test_fingerprint_is_stable_ignores_spaces_and_depends_on_bank_code():
+    a = account_fingerprint("5020 0012 345678", "hdfc0001234")
+    assert a == account_fingerprint("50200012345678", "HDFC0001234")
+    assert a != account_fingerprint("50200012345678", "ICIC0002345")
+    assert a != account_fingerprint("50200012345679", "HDFC0001234")
+    assert "50200012345678" not in a and len(a) == 64
+
+
+def test_fingerprint_depends_on_the_secret_key(monkeypatch):
+    monkeypatch.setenv("ACCOUNT_HASH_KEY", "key-one")
+    one = account_fingerprint("50200012345678", "HDFC0001234")
+    monkeypatch.setenv("ACCOUNT_HASH_KEY", "key-two")
+    assert one != account_fingerprint("50200012345678", "HDFC0001234")

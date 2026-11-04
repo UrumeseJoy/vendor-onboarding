@@ -156,12 +156,12 @@ class VendorSubmission(BaseModel):
 
 
 class KnownAccount(BaseModel):
-    """A bank account already on file for an existing vendor (used to spot duplicates)."""
+    """A bank account already on file for an existing vendor. Only a keyed fingerprint and the
+    last 4 digits are kept, never the full number (see security.py)."""
     vendor_id: str
     legal_name: str
-    account_number: str
-    ifsc: str | None = None
-    routing_number: str | None = None
+    account_fingerprint: str
+    account_last4: str
 
 
 # ---------- Extraction models ----------
