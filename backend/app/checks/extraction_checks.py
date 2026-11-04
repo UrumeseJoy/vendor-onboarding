@@ -1,6 +1,6 @@
 """Stage 2 checks: could each document be read, and were the values read clearly?"""
 
-from app.checks.base import doc_label, field_label, join_words, lower_label, make_check
+from app.checks.base import action_label, doc_label, field_label, join_words, make_check
 from app.config import get_rules
 from app.models import CheckOutcome, CheckResult, DocType, ExtractedDocument, Stage
 
@@ -21,7 +21,7 @@ def check_doc_readable(doc: ExtractedDocument) -> CheckOutcome:
             "DOC_READABLE", Stage.EXTRACTION, CheckResult.FAIL,
             f"We couldn't read {doc.filename} or tell what type of document it is.",
             {"filename": doc.filename, "claimed": doc.slot.value,
-             "action_required": f"Please upload a clear, readable copy of your {lower_label(doc.slot)}."})
+             "action_required": f"Please upload a clear, readable copy of your {action_label(doc.slot)}."})
     return make_check(
         "DOC_READABLE", Stage.EXTRACTION, CheckResult.PASS,
         f"{doc.filename} was read successfully (it looks like: {doc_label(doc.detected_type)}).",
@@ -42,7 +42,7 @@ def check_extraction_confidence(doc: ExtractedDocument) -> CheckOutcome:
             "EXTRACTION_CONFIDENCE", Stage.EXTRACTION, CheckResult.FAIL, reason,
             {"filename": doc.filename, "low_confidence_fields": low,
              "overall_confidence": round(doc.overall_confidence, 2),
-             "action_required": f"Please upload a clearer photo or scan of your {lower_label(doc.slot)}."})
+             "action_required": f"Please upload a clearer photo or scan of your {action_label(doc.slot)}."})
     return make_check(
         "EXTRACTION_CONFIDENCE", Stage.EXTRACTION, CheckResult.PASS,
         f"All values on {doc.filename} were read clearly.",

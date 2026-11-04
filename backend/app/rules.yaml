@@ -65,6 +65,10 @@ check_severity:
   IFSC_FORMAT: SOFT
   EIN_FORMAT: HARD
   ROUTING_FORMAT: SOFT
+  PAN_IN_GSTIN: HARD
+  GST_STATE_MATCH: SOFT
+  BANK_NAME_MATCH: HARD
+  DOC_FIELDS_MATCH: HARD
 
 # Official GST state codes. The first two digits of a GSTIN identify the state of registration.
 gst_state_codes:

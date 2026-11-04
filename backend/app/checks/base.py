@@ -1,7 +1,7 @@
 """Shared helper for building check results."""
 
 from app.config import get_rules
-from app.models import DOC_TYPE_LABELS, CheckOutcome, CheckResult, DocType, Stage
+from app.models import DOC_TYPE_HINTS, DOC_TYPE_LABELS, CheckOutcome, CheckResult, DocType, Stage
 
 
 class MissingSeverityError(ValueError):
@@ -44,13 +44,14 @@ def join_words(items: list[str], last_word: str = "and") -> str:
 
 
 def doc_label(doc_type: DocType) -> str:
+    """Short name, for reasons."""
     return DOC_TYPE_LABELS[doc_type.value]
 
 
-def lower_label(doc_type: DocType) -> str:
-    """Label for use mid-sentence: lowercase the first word unless it is an acronym (GST, PAN)."""
-    label = doc_label(doc_type)
-    return label[0].lower() + label[1:] if label[1].islower() else label
+def action_label(doc_type: DocType) -> str:
+    """Short name plus hint, for instructions to the vendor."""
+    hint = DOC_TYPE_HINTS.get(doc_type.value)
+    return f"{doc_label(doc_type)} ({hint})" if hint else doc_label(doc_type)
 
 
 def with_article(text: str) -> str:

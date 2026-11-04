@@ -29,15 +29,21 @@ class DocType(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
-# Plain-English names for document types, used in reasons and vendor messages.
+# Short plain-English names for document types, used in reasons and vendor messages.
 DOC_TYPE_LABELS = {
-    "GST_CERTIFICATE": "GST registration certificate (Form GST REG-06)",
+    "GST_CERTIFICATE": "GST registration certificate",
     "PAN_CARD": "PAN card",
-    "CANCELLED_CHEQUE": "Cancelled cheque",
-    "BANK_LETTER": "Bank letter",
+    "CANCELLED_CHEQUE": "cancelled cheque",
+    "BANK_LETTER": "bank letter",
     "W9_FORM": "Form W-9",
-    "INVOICE": "Invoice",
-    "UNKNOWN": "Unrecognised document",
+    "INVOICE": "invoice",
+    "UNKNOWN": "unrecognised document",
+}
+
+# Optional extra detail, added only to instructions for the vendor (action_required).
+DOC_TYPE_HINTS = {
+    "GST_CERTIFICATE": "Form GST REG-06",
+    "BANK_LETTER": "on the bank's letterhead",
 }
 
 
