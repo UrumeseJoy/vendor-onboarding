@@ -24,7 +24,8 @@ from sse_starlette.sse import EventSourceResponse
 from app.db import PipelineRunRecord, Vendor, get_engine, init_db
 from app.demo_cases import CASES_DIR, load_index, load_submission
 from app.extraction.factory import lazy_extractor
-from app.models import VendorEmail, VendorSubmission, mask_account
+from app.config import get_rules
+from app.models import PipelineRun, VendorEmail, VendorSubmission, mask_account
 from app.repository import (
     count_runs, get_run, get_vendor, get_vendor_runs, list_vendors, status_counts, update_run_email,
 )
@@ -133,7 +134,7 @@ def _run_summary(r: PipelineRunRecord) -> dict:
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "extractor_mode": extractor_mode()}
+    return {"status": "ok", "extractor_mode": extractor_mode(), "demo_mode": demo_mode()}
 
 
 @app.get("/api/demo-cases")
@@ -147,7 +148,8 @@ def demo_case(case_id: str):
     entry = next(e for e in load_index() if e["case_id"] == case_id)
     submission = load_submission(case_id)
     return {**entry, "submission": _masked(submission),
-            "documents": [d.model_dump(mode="json") for d in submission.documents]}
+            "documents": [{**d.model_dump(mode="json"),
+                           "file_url": f"/api/demo-cases/{case_id}/files/{d.filename}"} for d in submission.documents]}
 
 
 @app.get("/api/demo-cases/{case_id}/files/{filename}")
@@ -217,10 +219,18 @@ async def run_events(run_id: str, request: Request, session: SessionDep):
 
 @app.get("/api/runs/{run_id}")
 def get_run_detail(run_id: str, session: SessionDep):
-    run = get_run(session, run_id)
-    if run is None:
+    record = session.get(PipelineRunRecord, run_id)
+    if record is None:
         raise HTTPException(404, f"Run '{run_id}' not found. It may still be processing.")
-    return run.model_dump(mode="json")
+    run = PipelineRun.model_validate_json(record.run_json)
+    rules = get_rules()
+    return {
+        **run.model_dump(mode="json"),
+        "run_number": record.run_number,
+        "submission": json.loads(record.submission_json),  # stored with the account number masked
+        "thresholds": {"name_pass": rules.name_match.pass_threshold, "name_warn": rules.name_match.warn_threshold,
+                       "min_field_confidence": rules.extraction.min_field_confidence},
+    }
 
 
 @app.get("/api/runs/{run_id}/documents/{filename}")

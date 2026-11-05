@@ -453,3 +453,24 @@ def test_daily_quota_error_says_so(monkeypatch):
     with pytest.raises(llm.LLMError, match="daily request quota") as info:
         llm._with_retries(failing, sleep=lambda s: None)
     assert info.value.kind == "daily_quota"
+
+
+def test_only_sample_documents_are_written_to_the_cache(fake_llm, monkeypatch, tmp_path):
+    """Privacy: a real vendor's document (with its account number) is never cached on disk."""
+    from app.settings import cache_dir
+    from tests.test_api import fresh_pdf
+
+    real_upload = tmp_path / "real.pdf"
+    real_upload.write_bytes(fresh_pdf(tmp_path))
+    monkeypatch.setattr(llm, "extract_document", lambda pdf, slot: {
+        "detected_type": "CANCELLED_CHEQUE", "fields": {"account_number": "11112222333344"},
+        "field_confidence": {"account_number": 0.9}, "notes": ""})
+    sub = load_submission("01_happy_path")
+    sub = sub.model_copy(update={"documents": [sub.documents[2].model_copy(update={"filename": "real.pdf"})]})
+    gemini_extract(sub, {"real.pdf": real_upload})
+    assert not cache_dir().exists() or list(cache_dir().iterdir()) == []
+
+    monkeypatch.setattr(llm, "extract_document", lambda pdf, slot: perfect_reply(pdf, slot))
+    case_sub = load_submission("01_happy_path")
+    gemini_extract(case_sub, demo_files("01_happy_path", case_sub))
+    assert len(list(cache_dir().iterdir())) == 3  # the synthetic samples are cached

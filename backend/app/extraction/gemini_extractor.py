@@ -4,7 +4,8 @@
    in that text (ignoring case and spaces). A value that is not there is capped at confidence 0.5
    so later checks treat it as untrusted. Image-only PDFs keep Gemini's own confidence.
 2. A file-based cache keyed by file hash, claimed slot, model and prompt version, so the same file
-   never costs a second API call. Lookup order: runtime cache (.cache/extraction), then the committed
+   never costs a second API call. Only sample documents are cached: a real vendor's document is
+   never written to disk by the cache (its fields include a bank account number). Lookup order: runtime cache (.cache/extraction), then the committed
    read-only seed cache (sample_data/extraction_cache, the pre-read sample documents), then Gemini.
 
 If Gemini fails for any file the error is raised, so the pipeline marks EXTRACTION as FAILED and the
@@ -19,7 +20,7 @@ from statistics import mean
 import pymupdf
 
 from app import llm
-from app.extraction.mock_extractor import file_sha256
+from app.extraction.mock_extractor import build_sample_index, file_sha256
 from app.models import DocType, ExtractedDocument, UploadedDocument, VendorSubmission
 from app.settings import cache_dir, seed_cache_dir
 
@@ -94,7 +95,8 @@ def _read_one(uploaded: UploadedDocument, pdf_bytes: bytes, sha: str) -> Extract
     reading = _cache_read(sha, uploaded.slot)
     if reading is None:
         reading = llm.extract_document(pdf_bytes, uploaded.slot)  # raises LLMError on failure
-        _cache_write(sha, uploaded.slot, reading)
+        if sha in build_sample_index():  # privacy: only the synthetic samples are ever cached,
+            _cache_write(sha, uploaded.slot, reading)  # never a real vendor's document (rule 13)
     confidence, notes = verify_against_text(reading, pdf_text(pdf_bytes))
     return ExtractedDocument(
         filename=uploaded.filename, slot=uploaded.slot, detected_type=DocType(reading["detected_type"]),

@@ -20,7 +20,7 @@ from app.settings import extractor_mode
 from app.vendor_message import build_vendor_email
 from app.models import (
     CheckOutcome, CheckResult, Decision, ExtractedDocument, KnownAccount, PipelineRun, Severity,
-    Stage, StageResult, StageStatus, VendorStatus, VendorSubmission,
+    Stage, StageResult, StageStatus, VendorStatus, VendorSubmission, mask_account,
 )
 
 logger = logging.getLogger(__name__)
@@ -94,6 +94,14 @@ def risk_summary(checks: list[CheckOutcome]) -> str:
     return f"{len(flags)} risk flag{'s' if len(flags) > 1 else ''} raised: {names} (risk score {compute_risk_score(checks)})."
 
 
+def _masked_document(doc: ExtractedDocument) -> ExtractedDocument:
+    """A copy safe to store and show: the account number is masked (rule 6, rule 13)."""
+    fields = dict(doc.fields)
+    if fields.get("account_number"):
+        fields["account_number"] = mask_account(fields["account_number"])
+    return doc.model_copy(update={"fields": fields})
+
+
 def _short_error(error: Exception) -> str:
     text = f"{type(error).__name__}: {error}"
     return text if len(text) <= 200 else text[:197] + "..."
@@ -147,6 +155,7 @@ def run_pipeline(submission: VendorSubmission, vendor_id: str, extractor: Extrac
     def extraction():
         nonlocal docs
         docs = extractor(submission)
+        run.documents = [_masked_document(d) for d in docs]
         checks = run_extraction_checks(docs)
         return checks, extraction_summary(docs, checks)
 

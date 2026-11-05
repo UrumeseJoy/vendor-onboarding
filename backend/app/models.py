@@ -234,3 +234,4 @@ class PipelineRun(BaseModel):
     had_errors: bool = False
     upload_id: str | None = None  # where the run's documents are stored ("demo:<case_id>" for demo cases)
     email: VendorEmail | None = None
+    documents: list[ExtractedDocument] = Field(default_factory=list)  # what was read; account numbers masked

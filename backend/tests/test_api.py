@@ -78,7 +78,7 @@ def checks_of(run: dict) -> list[dict]:
 # ---------- basics ----------
 
 def test_health(client):
-    assert client.get("/api/health").json() == {"status": "ok", "extractor_mode": "mock"}
+    assert client.get("/api/health").json() == {"status": "ok", "extractor_mode": "mock", "demo_mode": False}
 
 
 def test_demo_cases_listed(client):
@@ -258,3 +258,25 @@ def test_unsupported_extractor_mode_fails_safe_to_pending(client, monkeypatch):
     extraction = next(s for s in run["stages"] if s["stage"] == "EXTRACTION")
     assert extraction["status"] == "FAILED" and "not recognised" in extraction["summary"]
     assert run["had_errors"] is True
+
+
+def test_run_detail_includes_masked_documents_submission_and_thresholds(client):
+    started, _ = run_demo(client, "01_happy_path")
+    run = client.get(f"/api/runs/{started['run_id']}").json()
+    assert [d["filename"] for d in run["documents"]] == ["gst_certificate.pdf", "pan_card.pdf", "cancelled_cheque.pdf"]
+    cheque = run["documents"][2]
+    assert cheque["fields"]["account_number"] == "••••5678"
+    assert cheque["detected_type"] == "CANCELLED_CHEQUE" and cheque["field_confidence"]["ifsc"] > 0.9
+    assert run["submission"]["bank"]["account_number"] == "••••5678"
+    assert run["run_number"] == 1 and run["thresholds"]["name_pass"] == 90
+    body = json.dumps(run, ensure_ascii=False)
+    for number in ACCOUNT_NUMBERS:
+        assert number not in body
+
+
+def test_demo_case_detail_can_prefill_a_form(client):
+    detail = client.get("/api/demo-cases/08_us_vendor").json()
+    assert detail["expected_status"] == "APPROVED"
+    assert detail["submission"]["ein"] == "84-1234567" and detail["submission"]["country"] == "US"
+    for doc in detail["documents"]:
+        assert client.get(doc["file_url"]).content.startswith(b"%PDF")
