@@ -15,10 +15,10 @@ const REFRESH_MS = 5_000
 
 function StatTile({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
-    <Card className="py-4">
+    <Card className="[--card-spacing:--spacing(4)]">
       <CardContent>
-        <div className="text-xs font-medium text-muted-foreground">{label}</div>
-        <div className={`mt-1 text-3xl font-semibold tabular-nums ${tone ?? ""}`}>{value}</div>
+        <div className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</div>
+        <div className={`mt-1 text-4xl font-bold tabular-nums ${tone ?? ""}`}>{value}</div>
       </CardContent>
     </Card>
   )
@@ -51,7 +51,7 @@ function ResetDemo({ onDone }: { onDone: () => void }) {
     )
   }
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md border border-rejected/30 bg-rejected-soft px-3 py-1.5 text-sm">
+    <div className="flex flex-wrap items-center gap-2 rounded-full border border-rejected bg-rejected-soft px-4 py-1.5 text-sm">
       <span className="text-rejected">Delete all vendors, runs and uploads?</span>
       <Button size="sm" variant="destructive" onClick={reset} disabled={busy}>{busy ? "Resetting…" : "Yes, reset"}</Button>
       <Button size="sm" variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>Cancel</Button>
@@ -64,7 +64,7 @@ function EmptyState() {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-        <ShieldCheck className="size-10 text-primary" aria-hidden />
+        <ShieldCheck className="size-10 text-brand" aria-hidden />
         <h2 className="text-lg font-semibold">No vendors yet</h2>
         <p className="max-w-md text-sm text-muted-foreground">
           Each vendor submission is checked in 8 stages (documents, formats, cross-checks and risk), then approved,
@@ -151,7 +151,7 @@ export function DashboardPage() {
                         onClick={() => navigate(`/vendors/${encodeURIComponent(v.vendor_id)}`)}
                       >
                         <TableCell>
-                          <Link to={`/vendors/${encodeURIComponent(v.vendor_id)}`} className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                          <Link to={`/vendors/${encodeURIComponent(v.vendor_id)}`} className="text-brand hover:underline" onClick={(e) => e.stopPropagation()}>
                             <Mono>{v.vendor_id}</Mono>
                           </Link>
                         </TableCell>

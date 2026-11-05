@@ -44,12 +44,12 @@ export function FileDrop({ id, label, file, onChange }: {
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
           className={cn(
-            "flex cursor-pointer flex-col items-center gap-1 rounded-md border border-dashed px-3 py-4 text-center text-sm text-muted-foreground transition-colors hover:bg-muted/50",
-            dragging && "border-primary bg-primary/5",
+            "flex cursor-pointer flex-col items-center gap-1 rounded-md border border-dashed px-3 py-4 text-center text-sm text-muted-foreground transition-colors hover:bg-muted",
+            dragging && "border-primary bg-brand-tint",
           )}
         >
           <Upload className="size-4" aria-hidden />
-          <span>Drop a PDF here or <span className="font-medium text-primary">browse</span></span>
+          <span>Drop a PDF here or <span className="font-medium text-brand">browse</span></span>
           <span className="text-xs">PDF only, up to 10 MB</span>
         </label>
       )}

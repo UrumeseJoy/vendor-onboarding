@@ -23,7 +23,7 @@ export function DecisionHeader({ run }: { run: RunDetail }) {
       <CardContent className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-semibold tracking-tight">{run.submission.legal_name}</h1>
+            <h1 className="truncate text-3xl font-bold tracking-tight">{run.submission.legal_name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               <Mono>{run.vendor_id}</Mono> · Run {run.run_number} · {run.submission.country === "IN" ? "India" : "USA"} ·{" "}
               {dateTime(run.finished_at ?? run.started_at)}

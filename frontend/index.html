@@ -4,12 +4,15 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <title>Vendor Onboarding</title>
     <script>
-      // Apply the saved (or system) theme before the first paint, so there is no flash.
+      // Light is the default. Apply the saved choice before the first paint, so there is no flash.
       try {
         const saved = localStorage.getItem("theme");
-        const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+        const dark = saved === "dark";
         document.documentElement.classList.toggle("dark", dark);
       } catch {}
     </script>

@@ -58,7 +58,7 @@ function DocumentCard({ run, doc }: { run: RunDetail; doc: ExtractedDocument }) 
           href={runDocumentUrl(run.run_id, doc.filename)}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"
         >
           View PDF <ExternalLink className="size-3.5" aria-hidden />
         </a>

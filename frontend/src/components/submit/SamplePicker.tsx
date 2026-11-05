@@ -59,7 +59,7 @@ function Preview({ detail, onRun, running }: { detail: DemoCaseDetail; onRun: ()
                   href={absoluteUrl(d.file_url)}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/50"
+                  className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
                 >
                   <FileText className="size-4 text-muted-foreground" aria-hidden />
                   <span className="min-w-0 flex-1">
@@ -107,8 +107,8 @@ export function SamplePicker({ onRun, running }: { onRun: (caseId: string) => vo
               onClick={() => setSelected(c.case_id)}
               aria-pressed={selected === c.case_id}
               className={cn(
-                "w-full rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-muted/50",
-                selected === c.case_id && "border-primary bg-primary/5",
+                "w-full rounded-lg border border-l-4 border-l-border bg-card px-3 py-2.5 text-left shadow-card transition-colors hover:bg-muted",
+                selected === c.case_id && "border-primary border-l-primary bg-brand-tint ring-1 ring-primary hover:bg-brand-tint",
               )}
             >
               <div className="flex items-center justify-between gap-2">

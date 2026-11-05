@@ -11,7 +11,7 @@ function NotFound() {
   return (
     <div className="py-16 text-center">
       <h1 className="text-xl font-semibold">Page not found</h1>
-      <Link to="/" className="mt-2 inline-block text-primary hover:underline">Back to the dashboard</Link>
+      <Link to="/" className="mt-2 inline-block text-brand hover:underline">Back to the dashboard</Link>
     </div>
   )
 }
