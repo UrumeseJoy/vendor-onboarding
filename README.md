@@ -119,7 +119,7 @@ All numbers below are from real runs on this code.
 
 | Measure | Result |
 |---|---|
-| Automated tests (`pytest`) | **263 passed, 1 skipped** (including an end-to-end API test of all 8 cases) |
+| Automated tests (`pytest`) | **264 passed, 1 skipped** (including an end-to-end API test of all 8 cases) |
 | Demo cases, mock extractor (`EXTRACTOR_MODE=mock`) | **8 of 8** match the expected status |
 | Demo cases, Gemini extractor (`EXTRACTOR_MODE=gemini`, using the committed pre-read cache) | **8 of 8** match the expected status |
 | Gemini document-type accuracy (23 sample documents) | **23 of 23 (100%)** |

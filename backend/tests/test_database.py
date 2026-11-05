@@ -107,11 +107,9 @@ def test_no_full_account_number_stored_anywhere(session):
 
 def test_known_accounts_come_from_the_database(session):
     process(session, "01_happy_path")
-    process(session, "08_us_vendor")
-    rejected = process(session, "03_pan_gstin_mismatch")
+    process(session, "03_pan_gstin_mismatch")
     accounts = known_accounts(session)
     assert len(accounts) == 2 and all(len(a.account_fingerprint) == 64 for a in accounts)
-    assert rejected.vendor_id not in {a.vendor_id for a in accounts}  # a rejected vendor's account is not in use
 
 
 def test_status_counts_after_seeding(session):

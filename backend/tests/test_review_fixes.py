@@ -47,6 +47,22 @@ def test_real_vendor_resubmitting_is_not_a_duplicate_of_a_rejected_impostor(tmp_
     assert again.decision.status == VendorStatus.APPROVED
 
 
+def test_vendor_rejected_for_another_reason_still_holds_its_account(tmp_path):
+    """Case 02 was rejected for a bank name mismatch: its account may belong to a bad actor, so reuse is flagged."""
+    engine = get_engine(f"sqlite:///{tmp_path}/t.db")
+    init_db(engine)
+    with Session(engine) as session:
+        first = process_submission(session, load_submission("02_bank_name_mismatch"),
+                                   case_extractor("02_bank_name_mismatch"))
+        reuse = load_submission("01_happy_path")
+        reuse.bank = load_submission("02_bank_name_mismatch").bank.model_copy()
+        second = process_submission(session, reuse, case_extractor("01_happy_path"))
+    assert first.decision.status == VendorStatus.REJECTED
+    flagged = [c for s in second.stages for c in s.checks
+               if c.check_id == "DUPLICATE_BANK_ACCOUNT" and c.result == CheckResult.FAIL]
+    assert flagged and flagged[0].details["other_vendor_id"] == first.vendor_id
+
+
 # ---------- 2. a failed read must not ask the vendor for documents they already sent ----------
 
 def test_extraction_error_never_asks_for_documents_already_uploaded():

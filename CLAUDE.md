@@ -29,6 +29,7 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 18. Sample documents are pre-read: backend/sample_data/extraction_cache/ is a committed, read-only seed cache of Gemini's reading of every sample PDF (made with `python -m scripts.eval_extraction --save-seed`). Lookup order: runtime cache, then seed cache, then Gemini. So the demo does not depend on API quota or latency; any newly uploaded document is read by Gemini live. Seed entries are keyed by file hash + slot + model + prompt version, so after changing GEMINI_MODEL or llm.PROMPT_VERSION the seed must be regenerated.
 19. A document must show every field in rules.yaml `expected_fields` for its type. Because the reader leaves out what it cannot read (rather than guessing), a missing expected field fails EXTRACTION_CONFIDENCE and the vendor is asked for a clearer copy.
 20. Each run stores the documents it read (PipelineRun.documents) with the account number masked; the API and UI never show a full account number and never try to reconstruct one.
+21. Duplicate detection ignores only vendors whose latest run was rejected with a failed DUPLICATE_BANK_ACCOUNT check: they copied an account that was not theirs, and counting them would get the real owner rejected as a duplicate. Vendors rejected for any other reason (bank name mismatch, PAN not in GSTIN) still hold their account, because it may belong to a bad actor and reuse is suspicious.
 
 ## Assumptions
 - Buyer is an Indian mid-size company. Vendors are from India (main) or USA.

@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, func, select
 
 from app.db import PROCESSING, PipelineRunRecord, Vendor
-from app.models import KnownAccount, PipelineRun, VendorStatus, VendorSubmission, mask_account
+from app.models import CheckResult, KnownAccount, PipelineRun, VendorStatus, VendorSubmission, mask_account
 from app.security import last4, submission_fingerprint
 
 
@@ -104,12 +104,23 @@ def get_run(session: Session, run_id: str) -> PipelineRun | None:
     return PipelineRun.model_validate_json(record.run_json) if record else None
 
 
+def _rejected_as_duplicate(session: Session, vendor: Vendor) -> bool:
+    """True if the vendor's latest run is REJECTED with a failed DUPLICATE_BANK_ACCOUNT check (by check ID)."""
+    if vendor.status != VendorStatus.REJECTED.value or vendor.latest_run_id is None:
+        return False
+    run = get_run(session, vendor.latest_run_id)
+    return run is not None and any(
+        c.check_id == "DUPLICATE_BANK_ACCOUNT" and c.result == CheckResult.FAIL
+        for stage in run.stages for c in stage.checks)
+
+
 def known_accounts(session: Session) -> list[KnownAccount]:
     """Every bank account on file, as fingerprints (used to spot duplicates).
-    A REJECTED vendor's account is not "in use": otherwise an impostor who tried a real vendor's
-    account (and was rejected) would get the real vendor rejected as a duplicate on its next run."""
-    vendors = session.exec(select(Vendor).where(Vendor.account_fingerprint != None,  # noqa: E711
-                                                Vendor.status != VendorStatus.REJECTED.value)).all()
+    A vendor whose latest run was rejected because of a DUPLICATE_BANK_ACCOUNT failure is left out: it
+    copied an account that was not its own, and counting it would get the real owner rejected as a
+    duplicate of that copier. Vendors rejected for any other reason still hold their account."""
+    vendors = [v for v in session.exec(select(Vendor).where(Vendor.account_fingerprint != None)).all()  # noqa: E711
+               if not _rejected_as_duplicate(session, v)]
     return [KnownAccount(vendor_id=v.vendor_id, legal_name=v.legal_name,
                          account_fingerprint=v.account_fingerprint, account_last4=v.account_last4 or "")
             for v in vendors]
