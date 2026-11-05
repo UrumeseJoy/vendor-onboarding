@@ -11,6 +11,7 @@ from pathlib import Path
 
 from app.extraction.mock_extractor import mock_extract
 from app.models import KnownAccount, PipelineRun, VendorSubmission
+from app.storage import demo_files
 from app.security import last4, submission_fingerprint
 from app.pipeline import OnStage, run_pipeline
 
@@ -44,14 +45,23 @@ def known_accounts_for(case_id: str) -> list[KnownAccount]:
     return accounts
 
 
-def run_demo_case(case_id: str, on_stage: OnStage | None = None) -> PipelineRun:
+def run_demo_case(case_id: str, on_stage: OnStage | None = None, use_factory: bool = False) -> PipelineRun:
+    """Run a demo case. use_factory=True reads the PDFs with the extractor chosen by EXTRACTOR_MODE
+    (mock or Gemini); the default always uses the offline mock, so tests never need the network."""
     case_dir = CASES_DIR / case_id
+    submission = load_submission(case_id)
+    if use_factory:
+        from app.extraction.factory import get_extractor
+        extractor = get_extractor(demo_files(case_id, submission))
+    else:
+        extractor = lambda sub: mock_extract(case_dir, sub)  # noqa: E731
     return run_pipeline(
-        submission=load_submission(case_id),
+        submission=submission,
         vendor_id=vendor_id_for(case_id),
-        extractor=lambda submission: mock_extract(case_dir, submission),
+        extractor=extractor,
         known_accounts=known_accounts_for(case_id),
         on_stage=on_stage,
+        upload_id=f"demo:{case_id}",
     )
 
 

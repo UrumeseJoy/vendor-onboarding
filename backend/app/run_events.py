@@ -62,6 +62,10 @@ class RunEvents:
             log = self._runs.get(run_id)
             return dict(log.meta) if log else None
 
+    def clear(self) -> None:
+        with self._lock:
+            self._runs.clear()
+
     def _drop_old(self) -> None:
         """Forget finished runs older than the keep time. Caller holds the lock."""
         cutoff = time.monotonic() - self._keep

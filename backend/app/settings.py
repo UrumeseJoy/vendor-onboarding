@@ -35,3 +35,14 @@ def stage_delay_ms() -> int:
 def frontend_origins() -> list[str]:
     extra = [o.strip() for o in os.getenv("FRONTEND_ORIGINS", "").split(",") if o.strip()]
     return [DEFAULT_FRONTEND_ORIGIN, *extra]
+
+
+def demo_mode() -> bool:
+    """Admin demo endpoints (like reset) only work when DEMO_MODE=true. Off when unset."""
+    return os.getenv("DEMO_MODE", "false").strip().lower() == "true"
+
+
+def cache_dir() -> Path:
+    """Extraction cache. CACHE_DIR overrides the default (used by tests)."""
+    path = Path(os.getenv("CACHE_DIR", "").strip() or ".cache/extraction")
+    return path if path.is_absolute() else BACKEND_DIR / path

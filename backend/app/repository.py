@@ -108,3 +108,16 @@ def status_counts(session: Session) -> dict[VendorStatus, int]:
 
 def count_runs(session: Session) -> int:
     return session.exec(select(func.count()).select_from(PipelineRunRecord)).one()
+
+
+def update_run_email(session: Session, run_id: str, email) -> PipelineRun | None:
+    """Replace a run's vendor email (e.g. after a person approves it) and re-save the run."""
+    record = session.get(PipelineRunRecord, run_id)
+    if record is None:
+        return None
+    run = PipelineRun.model_validate_json(record.run_json)
+    run.email = email
+    record.run_json = run.model_dump_json()
+    session.add(record)
+    session.commit()
+    return run

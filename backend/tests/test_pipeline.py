@@ -40,13 +40,20 @@ def test_case_matches_expected(case_id):
     assert not run.had_errors
 
 
+def test_vendor_message_stage_always_runs_with_a_template_in_mock_mode():
+    for case_id, generated_by in [("01_happy_path", "template"), ("02_bank_name_mismatch", "template"),
+                                  ("04_wrong_document", "template")]:
+        run = run_demo_case(case_id)
+        assert stage(run, Stage.VENDOR_MESSAGE).status == StageStatus.PASSED
+        assert run.email.generated_by == generated_by and run.email.status == "DRAFT"
+
+
 def test_case_01_approved_all_stages_passed():
     run = run_demo_case("01_happy_path")
     assert run.decision.status == VendorStatus.APPROVED
     assert run.decision.missing_items == []
     for r in run.stages:
-        expected = StageStatus.SKIPPED if r.stage == Stage.VENDOR_MESSAGE else StageStatus.PASSED
-        assert r.status == expected, r.stage
+        assert r.status == StageStatus.PASSED, r.stage
     assert run.decision.checks_summary["FAIL"] == 0
 
 

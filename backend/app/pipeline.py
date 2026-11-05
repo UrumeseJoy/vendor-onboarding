@@ -16,6 +16,8 @@ from app.checks.extraction_checks import run_extraction_checks
 from app.checks.format_checks import run_format_checks
 from app.checks.risk_checks import compute_risk_score, run_risk_checks
 from app.decision import RISK_FLAG_NAMES, decide
+from app.settings import extractor_mode
+from app.vendor_message import build_vendor_email
 from app.models import (
     CheckOutcome, CheckResult, Decision, ExtractedDocument, KnownAccount, PipelineRun, Severity,
     Stage, StageResult, StageStatus, VendorStatus, VendorSubmission,
@@ -99,8 +101,10 @@ def _short_error(error: Exception) -> str:
 
 def run_pipeline(submission: VendorSubmission, vendor_id: str, extractor: Extractor,
                  known_accounts: list[KnownAccount], on_stage: OnStage | None = None,
-                 run_id: str | None = None, upload_id: str | None = None) -> PipelineRun:
-    """run_id can be chosen by the caller (so it can be returned before the run starts)."""
+                 run_id: str | None = None, upload_id: str | None = None,
+                 ai_emails: bool | None = None) -> PipelineRun:
+    """run_id can be chosen by the caller (so it can be returned before the run starts).
+    ai_emails: draft PENDING emails with AI. None = only when EXTRACTOR_MODE is "gemini"."""
     run = PipelineRun(run_id=run_id or str(uuid.uuid4()), vendor_id=vendor_id, started_at=_now(),
                       upload_id=upload_id)
     outcomes: list[CheckOutcome] = []
@@ -174,7 +178,9 @@ def run_pipeline(submission: VendorSubmission, vendor_id: str, extractor: Extrac
         return [], DECISION_SUMMARY[status], DECISION_STAGE_STATUS[status]
 
     def vendor_message():
-        return [], "Vendor email drafting is added in a later step.", StageStatus.SKIPPED
+        use_ai = extractor_mode() == "gemini" if ai_emails is None else ai_emails
+        run.email, summary = build_vendor_email(submission.legal_name, run.decision, use_ai)
+        return [], summary, StageStatus.PASSED
 
     run_stage(Stage.INTAKE, intake)
     run_stage(Stage.EXTRACTION, extraction)

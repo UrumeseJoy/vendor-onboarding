@@ -22,6 +22,10 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 11. Fail safe: if any stage raises an error, that stage is marked FAILED with the error summary, the remaining stages still run where possible, and the final status can never be APPROVED — it becomes PENDING for manual review.
 12. Vendor-facing text comes only from action_required. Reasons and review_note are internal and must never be sent to the vendor.
 13. Full bank account numbers are never stored. Duplicate detection uses keyed fingerprints (security.py). Stored submissions keep only the last 4 digits.
+14. Text-layer verification: when a PDF has a text layer, every value Gemini extracts must appear in that text (ignoring case and spaces). A value that is not found is capped at confidence 0.5 and so becomes untrusted. Image-only PDFs keep Gemini's own confidence.
+15. Extraction caching: Gemini results are cached in backend/.cache/extraction/ keyed by file hash + claimed slot + model + prompt version (change llm.PROMPT_VERSION when a prompt changes). The same file never costs a second API call.
+16. REJECTED emails are never written by AI: they use a fixed neutral template and never state a reason. AI drafts (PENDING only) are built from missing_items alone and are discarded in favour of the template if they fail the safety check (a missing item's key words absent, a vendor ID, review_note text, "risk score" or "fraud").
+17. The API must run as a single process, because live run events are held in memory (run_events.py).
 
 ## Assumptions
 - Buyer is an Indian mid-size company. Vendors are from India (main) or USA.

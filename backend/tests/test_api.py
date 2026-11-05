@@ -251,10 +251,10 @@ def test_stats(client):
 
 
 def test_unsupported_extractor_mode_fails_safe_to_pending(client, monkeypatch):
-    monkeypatch.setenv("EXTRACTOR_MODE", "gemini")  # not implemented yet
+    monkeypatch.setenv("EXTRACTOR_MODE", "banana")  # not a real mode
     started, decision = run_demo(client, "01_happy_path")
     assert decision["status"] == "PENDING"
     run = client.get(f"/api/runs/{started['run_id']}").json()
     extraction = next(s for s in run["stages"] if s["stage"] == "EXTRACTION")
-    assert extraction["status"] == "FAILED" and "not implemented yet" in extraction["summary"]
+    assert extraction["status"] == "FAILED" and "not recognised" in extraction["summary"]
     assert run["had_errors"] is True

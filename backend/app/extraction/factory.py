@@ -1,7 +1,8 @@
 """Chooses the document extractor from EXTRACTOR_MODE in .env.
 
 - "mock" (default): recognise sample PDFs by their content hash (no AI, no internet).
-- anything else: not implemented yet (Gemini is added in the next step).
+- "gemini": read documents with Gemini (needs GEMINI_API_KEY).
+- anything else: an error.
 """
 
 from collections.abc import Callable
@@ -15,7 +16,7 @@ Extractor = Callable[[VendorSubmission], list[ExtractedDocument]]
 
 
 class ExtractorNotAvailable(RuntimeError):
-    """EXTRACTOR_MODE names an extractor that does not exist yet."""
+    """EXTRACTOR_MODE names an extractor that does not exist."""
 
 
 def get_extractor(stored_files: dict[str, Path]) -> Extractor:
@@ -23,8 +24,10 @@ def get_extractor(stored_files: dict[str, Path]) -> Extractor:
     mode = extractor_mode()
     if mode == "mock":
         return lambda submission: hash_lookup_extract(submission, stored_files)
-    raise ExtractorNotAvailable(
-        f"EXTRACTOR_MODE '{mode}' is not implemented yet. Use EXTRACTOR_MODE=mock for now.")
+    if mode == "gemini":
+        from app.extraction.gemini_extractor import gemini_extract  # imported late: mock mode needs no SDK
+        return lambda submission: gemini_extract(submission, stored_files)
+    raise ExtractorNotAvailable(f"EXTRACTOR_MODE '{mode}' is not recognised. Use 'mock' or 'gemini'.")
 
 
 def lazy_extractor(stored_files: dict[str, Path]) -> Extractor:

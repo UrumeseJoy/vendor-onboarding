@@ -8,6 +8,7 @@ The only normalisation: strip whitespace, and uppercase PAN, GSTIN and IFSC.
 
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -174,6 +175,7 @@ class ExtractedDocument(BaseModel):
     fields: dict[str, str] = Field(default_factory=dict)
     field_confidence: dict[str, float] = Field(default_factory=dict)
     overall_confidence: float = Field(ge=0, le=1)
+    notes: list[str] = Field(default_factory=list)  # e.g. "account_number: not found in document text"
 
 
 # ---------- Result models ----------
@@ -210,6 +212,17 @@ class Decision(BaseModel):
     checks_summary: dict[str, int] = Field(default_factory=dict)  # counts of PASS / FAIL / WARN
 
 
+class VendorEmail(BaseModel):
+    """The message to the vendor. Always a DRAFT until a person approves it (sending is simulated)."""
+    subject: str
+    body: str
+    generated_by: Literal["ai", "template"]
+    status: Literal["DRAFT", "SENT"] = "DRAFT"
+    approved_at: datetime | None = None
+    edited: bool = False  # True if a person changed the draft before approving
+    fallback_reason: str | None = None  # why a template was used instead of an AI draft
+
+
 class PipelineRun(BaseModel):
     """One complete run of the pipeline for a vendor: every stage result plus the decision."""
     run_id: str
@@ -220,3 +233,4 @@ class PipelineRun(BaseModel):
     decision: Decision | None = None
     had_errors: bool = False
     upload_id: str | None = None  # where the run's documents are stored ("demo:<case_id>" for demo cases)
+    email: VendorEmail | None = None

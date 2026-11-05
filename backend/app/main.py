@@ -9,6 +9,8 @@ submissions are masked before they are sent.
 
 import asyncio
 import json
+import shutil
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -16,17 +18,19 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Upload
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ValidationError
-from sqlmodel import Session
+from sqlmodel import Session, delete
 from sse_starlette.sse import EventSourceResponse
 
 from app.db import PipelineRunRecord, Vendor, get_engine, init_db
 from app.demo_cases import CASES_DIR, load_index, load_submission
 from app.extraction.factory import lazy_extractor
-from app.models import VendorSubmission, mask_account
-from app.repository import count_runs, get_run, get_vendor, get_vendor_runs, list_vendors, status_counts
+from app.models import VendorEmail, VendorSubmission, mask_account
+from app.repository import (
+    count_runs, get_run, get_vendor, get_vendor_runs, list_vendors, status_counts, update_run_email,
+)
 from app.run_events import registry
 from app.service import VendorNotFound, submit_in_background
-from app.settings import extractor_mode, frontend_origins
+from app.settings import demo_mode, extractor_mode, frontend_origins, storage_dir
 from app.storage import (
     MAX_FILE_BYTES, UploadError, demo_files, document_path, match_submission_files, save_uploads,
     validate_uploads,
@@ -256,3 +260,42 @@ def stats(session: SessionDep):
     counts = status_counts(session)
     return {"status_counts": {status.value: n for status, n in counts.items()},
             "total_vendors": len(list_vendors(session)), "total_runs": count_runs(session)}
+
+
+class EmailApproval(BaseModel):
+    subject: str | None = None  # a person's edits; leave out to approve the draft as written
+    body: str | None = None
+
+
+@app.post("/api/runs/{run_id}/email/approve")
+def approve_email(run_id: str, session: SessionDep, edits: EmailApproval | None = None):
+    """A person approves the vendor email (optionally editing it first). Sending is simulated."""
+    run = get_run(session, run_id)
+    if run is None:
+        raise HTTPException(404, f"Run '{run_id}' not found.")
+    if run.email is None:
+        raise HTTPException(404, "This run has no vendor email yet.")
+    if run.email.status == "SENT":
+        raise HTTPException(409, "This email has already been approved and sent.")
+    subject = edits.subject if edits and edits.subject is not None else run.email.subject
+    body = edits.body if edits and edits.body is not None else run.email.body
+    if not subject.strip() or not body.strip():
+        raise HTTPException(400, "The email subject and body cannot be empty.")
+    approved = run.email.model_copy(update={
+        "subject": subject, "body": body, "status": "SENT", "approved_at": datetime.now(timezone.utc),
+        "edited": subject != run.email.subject or body != run.email.body})
+    update_run_email(session, run_id, approved)  # simulated send: nothing is emailed
+    return approved.model_dump(mode="json")
+
+
+@app.post("/api/admin/reset-demo")
+def reset_demo(session: SessionDep):
+    """Delete all vendors, runs and uploads (keeps the extraction cache). Only when DEMO_MODE=true."""
+    if not demo_mode():
+        raise HTTPException(403, "Resetting is only allowed when DEMO_MODE=true.")
+    runs = session.exec(delete(PipelineRunRecord)).rowcount
+    vendors_deleted = session.exec(delete(Vendor)).rowcount
+    session.commit()
+    shutil.rmtree(storage_dir() / "uploads", ignore_errors=True)
+    registry.clear()
+    return {"deleted_vendors": vendors_deleted, "deleted_runs": runs}

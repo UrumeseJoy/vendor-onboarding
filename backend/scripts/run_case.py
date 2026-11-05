@@ -10,6 +10,7 @@ import os
 import sys
 
 from app.demo_cases import load_expected, load_index, load_submission, run_demo_case
+from app.settings import extractor_mode
 from app.models import CheckResult, PipelineRun, StageStatus, VendorStatus
 
 USE_COLOUR = sys.stdout.isatty() and "NO_COLOR" not in os.environ
@@ -42,7 +43,8 @@ def print_report(case_id: str, run: PipelineRun) -> None:
     if d is None:
         print(paint("\n  No decision was made.", "red"))
         return
-    print(f"\n  Final status: {paint(d.status.value, STATUS_COLOUR[d.status])}    Risk score: {d.risk_score}"
+    print(f"\n  Extractor: {extractor_mode()}")
+    print(f"  Final status: {paint(d.status.value, STATUS_COLOUR[d.status])}    Risk score: {d.risk_score}"
           f"    Checks: {d.checks_summary}")
     for title, items in [("Reasons (internal)", d.reasons),
                          ("Missing items (for the vendor)", d.missing_items),
@@ -51,13 +53,15 @@ def print_report(case_id: str, run: PipelineRun) -> None:
             print(f"  {title}:")
             for item in items:
                 print(f"    - {item}")
+    if run.email:
+        print(f"  Vendor email ({run.email.generated_by}, {run.email.status}): {run.email.subject}")
 
 
 def run_all() -> bool:
     rows = []
     for entry in load_index():
         case_id = entry["case_id"]
-        run = run_demo_case(case_id)
+        run = run_demo_case(case_id, use_factory=True)
         print_report(case_id, run)
         expected = load_expected(case_id)["expected_status"]
         actual = run.decision.status.value if run.decision else "NONE"
@@ -82,7 +86,7 @@ def main() -> None:
         sys.exit(0 if run_all() else 1)
     if not args.case_id:
         parser.error("give a case_id or --all")
-    print_report(args.case_id, run_demo_case(args.case_id))
+    print_report(args.case_id, run_demo_case(args.case_id, use_factory=True))
 
 
 if __name__ == "__main__":
