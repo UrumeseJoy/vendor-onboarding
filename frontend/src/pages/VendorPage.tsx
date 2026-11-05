@@ -65,7 +65,11 @@ export function VendorPage() {
         )}
       >
         {vendor.runs.length === 0 ? (
-          <p className="p-4 text-sm text-muted-foreground">The first run is still in progress.</p>
+          <p className="p-4 text-sm text-muted-foreground">
+            {vendor.status === "PROCESSING"
+              ? "The first run is still in progress."
+              : "No run was saved for this vendor: processing was interrupted. A person needs to review it."}
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <Table>

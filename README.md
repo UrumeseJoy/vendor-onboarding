@@ -119,7 +119,7 @@ All numbers below are from real runs on this code.
 
 | Measure | Result |
 |---|---|
-| Automated tests (`pytest`) | **247 passed, 1 skipped** |
+| Automated tests (`pytest`) | **263 passed, 1 skipped** (including an end-to-end API test of all 8 cases) |
 | Demo cases, mock extractor (`EXTRACTOR_MODE=mock`) | **8 of 8** match the expected status |
 | Demo cases, Gemini extractor (`EXTRACTOR_MODE=gemini`, using the committed pre-read cache) | **8 of 8** match the expected status |
 | Gemini document-type accuracy (23 sample documents) | **23 of 23 (100%)** |
@@ -161,7 +161,7 @@ uvicorn app.main:app --port 8000
 ```
 
 - `EXTRACTOR_MODE=mock` reads the sample PDFs offline (no API key needed); `gemini` reads documents live.
-- `DEMO_MODE=true` enables the "Reset demo" button on the Dashboard.
+- `DEMO_MODE=true` shows "Reset demo" in the sidebar (under Demo).
 
 **Frontend:**
 
@@ -172,7 +172,7 @@ cp .env.example .env        # VITE_API_URL=http://localhost:8000
 npm run dev                 # http://localhost:5173
 ```
 
-**Pages:** Submit (upload your own PDFs or run a sample case), Live run and Result (stages stream in as they finish; the vendor email can be edited and approved), Dashboard (all vendors, counts, Reset demo) and Vendor detail (run history and Resubmit).
+**Pages:** Submit (upload your own PDFs or run a sample case), Live run and Result (stages stream in as they finish; the vendor email can be edited and approved), Dashboard (all vendors and counts) and Vendor detail (run history and Resubmit). Reset demo is in the sidebar under Demo.
 
 ### Test commands
 

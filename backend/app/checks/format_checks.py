@@ -70,7 +70,9 @@ def check_ifsc_format(ifsc: str) -> CheckOutcome:
         return _check("IFSC_FORMAT", CheckResult.FAIL,
                       f"IFSC '{ifsc}' is not valid. An IFSC has 4 letters, the digit 0, then 6 letters or "
                       f"digits, like HDFC0001234.",
-                      field="ifsc", value=ifsc, expected="4 letters, 0, 6 letters/digits")
+                      field="ifsc", value=ifsc, expected="4 letters, 0, 6 letters/digits",
+                      action_required="Please check your bank's IFSC code and provide it again "
+                                      "(11 characters, like HDFC0001234).")
     return _check("IFSC_FORMAT", CheckResult.PASS, "IFSC format is valid.", field="ifsc", value=ifsc)
 
 
@@ -87,12 +89,14 @@ def check_routing_format(routing: str) -> CheckOutcome:
         return _check("ROUTING_FORMAT", CheckResult.FAIL,
                       f"Routing number '{routing}' is not valid. A US routing number has exactly 9 digits, "
                       f"like 123456780.",
-                      field="routing_number", value=routing, expected="9 digits")
+                      field="routing_number", value=routing, expected="9 digits",
+                      action_required="Please check your bank's routing number and provide it again (9 digits).")
     if not aba_routing_valid(routing):
         return _check("ROUTING_FORMAT", CheckResult.FAIL,
                       f"Routing number '{routing}' has 9 digits but fails the standard bank checksum, "
                       f"so it may contain a typo.",
-                      field="routing_number", value=routing, expected="9 digits passing the ABA checksum")
+                      field="routing_number", value=routing, expected="9 digits passing the ABA checksum",
+                      action_required="Please check your bank's routing number and provide it again (9 digits).")
     return _check("ROUTING_FORMAT", CheckResult.PASS, "Routing number format and checksum are valid.",
                   field="routing_number", value=routing)
 

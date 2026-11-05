@@ -14,6 +14,11 @@ from app.models import CHECK_IDS, Country, DocType, Severity
 
 RULES_PATH = Path(__file__).parent / "rules.yaml"
 
+RISK_CHECK_IDS = {"FREE_EMAIL_DOMAIN", "BANK_COUNTRY_MISMATCH", "DUPLICATE_BANK_ACCOUNT"}
+# Form fields a rule may require ("bank.x" = field x of the bank details).
+FORM_FIELDS = {"legal_name", "state", "address", "contact_email", "pan", "gstin", "ein",
+               "bank.holder_name", "bank.account_number", "bank.ifsc", "bank.routing_number", "bank.bank_country"}
+
 
 class RulesError(Exception):
     """rules.yaml is missing or invalid."""
@@ -69,6 +74,27 @@ class RulesConfig(BaseModel):
                 raise ValueError(
                     f"risk flag {flag} has severity {rule.severity.value} in risk.flags but "
                     f"{getattr(self.check_severity.get(flag), 'value', None)} in check_severity")
+        return self
+
+    @model_validator(mode="after")
+    def _complete(self):
+        """Fail at load time, not halfway through a run, if a section is incomplete."""
+        problems = []
+        for section in ("required_fields", "required_documents"):
+            missing = [c.value for c in Country if c not in getattr(self, section)]
+            if missing:
+                problems.append(f"{section} has no entry for {', '.join(missing)}")
+        missing_ids = sorted(CHECK_IDS - set(self.check_severity))
+        if missing_ids:
+            problems.append(f"check_severity has no severity for {missing_ids}")
+        if set(self.risk.flags) != RISK_CHECK_IDS:
+            problems.append(f"risk.flags must list exactly {sorted(RISK_CHECK_IDS)}")
+        for country, fields in self.required_fields.items():
+            unknown = [f for f in fields if f not in FORM_FIELDS]
+            if unknown:
+                problems.append(f"required_fields.{country.value} has unknown fields {unknown}")
+        if problems:
+            raise ValueError("; ".join(problems))
         return self
 
     @field_validator("expected_fields")

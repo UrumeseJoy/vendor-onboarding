@@ -27,7 +27,8 @@ from app.extraction.factory import lazy_extractor
 from app.config import get_rules
 from app.models import PipelineRun, VendorEmail, VendorSubmission, mask_account
 from app.repository import (
-    count_runs, get_run, get_vendor, get_vendor_runs, list_vendors, status_counts, update_run_email,
+    count_runs, get_run, get_vendor, get_vendor_runs, list_vendors, recover_interrupted_vendors, status_counts,
+    update_run_email,
 )
 from app.run_events import registry
 from app.service import VendorNotFound, submit_in_background
@@ -44,6 +45,8 @@ SSE_POLL_SECONDS = 0.05
 async def lifespan(app: FastAPI):
     engine = get_engine()
     init_db(engine)
+    with Session(engine) as session:
+        recover_interrupted_vendors(session)  # runs from before a restart can never finish
     app.state.engine = engine
     yield
     engine.dispose()

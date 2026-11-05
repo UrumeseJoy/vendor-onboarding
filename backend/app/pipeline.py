@@ -5,12 +5,13 @@ the remaining stages still run, and the decision can never be APPROVED.
 """
 
 import logging
+import re
 import uuid
 from collections.abc import Callable
 from datetime import datetime, timezone
 
 from app.checks.base import make_check
-from app.checks.completeness_checks import run_completeness_checks
+from app.checks.completeness_checks import check_required_fields, run_completeness_checks
 from app.checks.cross_checks import run_cross_checks
 from app.checks.extraction_checks import run_extraction_checks
 from app.checks.format_checks import run_format_checks
@@ -94,12 +95,28 @@ def risk_summary(checks: list[CheckOutcome]) -> str:
     return f"{len(flags)} risk flag{'s' if len(flags) > 1 else ''} raised: {names} (risk score {compute_risk_score(checks)})."
 
 
+NUMBER_RUN_RE = re.compile(r"\d[\d -]*\d")  # digits, possibly split by spaces or dashes
+
+
+def _mask_numbers(text: str, account_number: str | None) -> str:
+    """Free text (the reader's notes) could quote an account number. Mask this document's account
+    number, and any other run of 9+ digits (short numbers such as dates are left alone)."""
+    account = re.sub(r"\D", "", account_number or "")
+
+    def mask(match: re.Match) -> str:
+        digits = re.sub(r"\D", "", match.group())
+        return mask_account(digits) if len(digits) >= 9 or (account and digits == account) else match.group()
+    return NUMBER_RUN_RE.sub(mask, text)
+
+
 def _masked_document(doc: ExtractedDocument) -> ExtractedDocument:
-    """A copy safe to store and show: the account number is masked (rule 6, rule 13)."""
+    """A copy safe to store and show: the account number is masked (rule 6, rule 13), in the
+    fields and in any note that quotes it."""
     fields = dict(doc.fields)
+    notes = [_mask_numbers(note, fields.get("account_number")) for note in doc.notes]
     if fields.get("account_number"):
         fields["account_number"] = mask_account(fields["account_number"])
-    return doc.model_copy(update={"fields": fields})
+    return doc.model_copy(update={"fields": fields, "notes": notes})
 
 
 def _short_error(error: Exception) -> str:
@@ -160,6 +177,12 @@ def run_pipeline(submission: VendorSubmission, vendor_id: str, extractor: Extrac
         return checks, extraction_summary(docs, checks)
 
     def completeness():
+        if Stage.EXTRACTION.value in errored_stages:
+            # The documents were never read, so we cannot say any is missing or of the wrong type
+            # (and must not ask the vendor to upload files they already sent). Only the form is checked;
+            # the failed read already makes this vendor PENDING for manual review.
+            checks = [check_required_fields(submission)]
+            return checks, count_summary(checks, "completeness checks") + " Documents not checked: they could not be read."
         checks = run_completeness_checks(submission, docs)
         return checks, count_summary(checks, "completeness checks")
 

@@ -445,14 +445,16 @@ def test_error_kinds_are_told_apart():
 def test_daily_quota_error_says_so(monkeypatch):
     class Daily(FakeAPIError):
         def __str__(self): return "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
-    monkeypatch.setattr(llm, "_is_transient", lambda e: False)
+    monkeypatch.setattr(llm, "_is_transient", lambda e: True)  # a 429 is transient...
+    attempts = []
 
     def failing():
+        attempts.append(1)
         raise Daily(429)
 
     with pytest.raises(llm.LLMError, match="daily request quota") as info:
         llm._with_retries(failing, sleep=lambda s: None)
-    assert info.value.kind == "daily_quota"
+    assert info.value.kind == "daily_quota" and len(attempts) == 1  # ...but a spent daily quota is not retried
 
 
 def test_only_sample_documents_are_written_to_the_cache(fake_llm, monkeypatch, tmp_path):

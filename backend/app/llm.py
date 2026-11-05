@@ -104,7 +104,7 @@ def _with_retries(call, sleep=time.sleep):
         except LLMError:
             raise
         except Exception as error:
-            if _is_transient(error) and attempt < MAX_RETRIES:
+            if _is_transient(error) and _error_kind(error) != "daily_quota" and attempt < MAX_RETRIES:
                 logger.warning("Gemini call failed (%s); retrying", type(error).__name__)
                 sleep(BACKOFF_SECONDS[min(attempt, len(BACKOFF_SECONDS) - 1)])
                 continue

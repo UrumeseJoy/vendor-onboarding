@@ -72,6 +72,18 @@ def save_run(session: Session, submission: VendorSubmission, run: PipelineRun) -
     return vendor
 
 
+def recover_interrupted_vendors(session: Session) -> int:
+    """Fail safe after a restart: a vendor still PROCESSING has no live run any more (runs live in this
+    process's memory), so it is set to PENDING for manual review. Returns how many were recovered."""
+    stuck = session.exec(select(Vendor).where(Vendor.status == PROCESSING)).all()
+    now = datetime.now(timezone.utc)
+    for vendor in stuck:
+        vendor.status, vendor.updated_at = VendorStatus.PENDING.value, now
+        session.add(vendor)
+    session.commit()
+    return len(stuck)
+
+
 def get_vendor(session: Session, vendor_id: str) -> Vendor | None:
     return session.get(Vendor, vendor_id)
 
@@ -93,8 +105,11 @@ def get_run(session: Session, run_id: str) -> PipelineRun | None:
 
 
 def known_accounts(session: Session) -> list[KnownAccount]:
-    """Every bank account on file, as fingerprints (used to spot duplicates)."""
-    vendors = session.exec(select(Vendor).where(Vendor.account_fingerprint != None)).all()  # noqa: E711
+    """Every bank account on file, as fingerprints (used to spot duplicates).
+    A REJECTED vendor's account is not "in use": otherwise an impostor who tried a real vendor's
+    account (and was rejected) would get the real vendor rejected as a duplicate on its next run."""
+    vendors = session.exec(select(Vendor).where(Vendor.account_fingerprint != None,  # noqa: E711
+                                                Vendor.status != VendorStatus.REJECTED.value)).all()
     return [KnownAccount(vendor_id=v.vendor_id, legal_name=v.legal_name,
                          account_fingerprint=v.account_fingerprint, account_last4=v.account_last4 or "")
             for v in vendors]

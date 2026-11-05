@@ -6,8 +6,8 @@ Order: **01 → 02 → 04 → resubmit with 05 → 06 → 07 → Dashboard.** Ca
 
 1. Backend: `cd backend && source venv/bin/activate && uvicorn app.main:app --port 8000` (one process only).
 2. Frontend: `cd frontend && npm run dev`, open http://localhost:5173.
-3. Check the **extractor badge** in the header. It should say **Gemini** (or **Mock** if you started in mock mode; see the backup plan).
-4. Go to **Dashboard** and click **Reset demo → Yes, reset**. Counts should all be 0. (`DEMO_MODE=true` must be set in `backend/.env`, or the button is hidden.)
+3. Check the **extractor label** at the top right. It should say **Extractor: Gemini** (or **Mock** if you started in mock mode; see the backup plan).
+4. In the left sidebar, under **Demo**, click **Reset demo → Yes, reset**. You land on the Dashboard with every count at 0. (`DEMO_MODE=true` must be set in `backend/.env`, or the Demo group is hidden.)
 5. Go to **Submit**. Keep the sample picker open.
 
 Case 07 needs case 01 to have run first, and case 05 needs case 04 first. Following the order below does this.
@@ -64,12 +64,12 @@ Case 07 needs case 01 to have run first, and case 05 needs case 04 first. Follow
 
 ## Backup plan: Gemini is slow or out of quota
 
-The free Gemini tier is limited (roughly 20 requests per model per day), and a sample case should normally come from the committed pre-read cache without any API call. If a run still hangs, errors, or the badge shows a problem:
+The free Gemini tier is limited (roughly 20 requests per model per day), and a sample case should normally come from the committed pre-read cache without any API call. If a run still hangs, errors, or the extractor label shows a problem:
 
 1. Stop the backend (Ctrl+C).
 2. In `backend/.env` set `EXTRACTOR_MODE=mock`.
 3. Restart: `uvicorn app.main:app --port 8000`.
-4. Reload the page. The header badge now says **Mock**.
-5. **Reset demo** and start again from case 01.
+4. Reload the page. The label at the top right now says **Extractor: Mock**.
+5. **Reset demo** (sidebar) and start again from case 01.
 
 Mock mode reads the same sample PDFs offline, so all 8 cases give the expected statuses. One visible difference: in case 06 the message says it couldn't clearly read the account number, IFSC and bank name, instead of the IFSC alone. Uploads of your own documents need Gemini, so keep to the sample cases in mock mode.
