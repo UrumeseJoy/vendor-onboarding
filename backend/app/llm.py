@@ -33,7 +33,21 @@ FieldName = Literal[
 
 
 class LLMError(Exception):
-    """A Gemini call failed (after retries) or returned something unusable."""
+    """A Gemini call failed (after retries) or returned something unusable.
+    kind: "daily_quota" (do not retry today), "rate_limit" or "overloaded" (worth retrying later), "other"."""
+
+    def __init__(self, message: str, kind: str = "other"):
+        super().__init__(message)
+        self.kind = kind
+
+
+def _error_kind(error: Exception) -> str:
+    code = getattr(error, "code", None)
+    if code == 429:
+        return "daily_quota" if "PerDay" in str(error) else "rate_limit"
+    if code in (500, 502, 503, 504):
+        return "overloaded"
+    return "other"
 
 
 # ---------- reply shapes (Gemini must match these) ----------
@@ -94,8 +108,11 @@ def _with_retries(call, sleep=time.sleep):
                 logger.warning("Gemini call failed (%s); retrying", type(error).__name__)
                 sleep(BACKOFF_SECONDS[min(attempt, len(BACKOFF_SECONDS) - 1)])
                 continue
-            kind = "is rate-limiting requests" if getattr(error, "code", None) == 429 else "call failed"
-            raise LLMError(f"Gemini {kind} ({type(error).__name__}: {str(error)[:200]})") from error
+            kind = _error_kind(error)
+            what = {"daily_quota": "has used up its daily request quota (it resets in about a day)",
+                    "rate_limit": "is rate-limiting requests",
+                    "overloaded": "is overloaded or timed out"}.get(kind, "call failed")
+            raise LLMError(f"Gemini {what} ({type(error).__name__}: {str(error)[:160]})", kind) from error
 
 
 def _generate(contents: list, schema: type[BaseModel]) -> BaseModel:
@@ -166,3 +183,24 @@ def draft_vendor_email(legal_name: str, status: str, missing_items: list[str]) -
     items = "\n".join(f"- {item}" for item in missing_items)
     draft = _generate([EMAIL_PROMPT.format(name=legal_name, status=status, items=items)], EmailDraft)
     return {"subject": draft.subject.strip(), "body": draft.body.strip()}
+
+
+def ping(model: str) -> tuple[float, str]:
+    """One tiny request to a specific model, with no retries. Returns (seconds taken, reply text).
+    Raises on any error so the caller can show it (used by scripts/check_gemini.py)."""
+    started = time.monotonic()
+    response = _client().models.generate_content(model=model, contents="Reply with the single word: ok")
+    return time.monotonic() - started, (response.text or "").strip()
+
+
+def error_summary(error: Exception) -> str:
+    """Short, readable description of a Gemini error."""
+    code = getattr(error, "code", None)
+    kind = _error_kind(error)
+    if kind == "daily_quota":
+        return "429 daily quota used up"
+    if kind == "rate_limit":
+        return "429 rate limited"
+    if kind == "overloaded":
+        return f"{code} model overloaded / timed out"
+    return f"{code or type(error).__name__}: {str(error)[:100]}"

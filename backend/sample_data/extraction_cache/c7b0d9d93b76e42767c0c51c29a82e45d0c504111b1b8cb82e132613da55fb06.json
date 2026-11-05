@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "v1",
+    "slot": "W9_FORM"
+  },
+  "reading": {
+    "detected_type": "W9_FORM",
+    "fields": {
+      "legal_name": "Lakeside Analytics LLC",
+      "trade_name": "Lakeside Analytics LLC",
+      "address": "210 Congress Avenue, Austin, Texas 78701",
+      "state": "Texas",
+      "ein": "84-1234567"
+    },
+    "field_confidence": {
+      "legal_name": 1.0,
+      "trade_name": 1.0,
+      "address": 1.0,
+      "state": 1.0,
+      "ein": 1.0
+    },
+    "notes": "This is a synthetic specimen W-9 form."
+  }
+}

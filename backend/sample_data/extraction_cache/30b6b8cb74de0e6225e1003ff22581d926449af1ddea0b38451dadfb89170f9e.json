@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "v1",
+    "slot": "GST_CERTIFICATE"
+  },
+  "reading": {
+    "detected_type": "GST_CERTIFICATE",
+    "fields": {
+      "gstin": "29AABCD5678F1ZE",
+      "legal_name": "Deccan Steel Works Private Limited",
+      "trade_name": "Deccan Steel Works Private Limited",
+      "address": "27 Residency Road, Bengaluru, Karnataka 560001",
+      "state": "Karnataka",
+      "pan": "AABCD5678F"
+    },
+    "field_confidence": {
+      "gstin": 1.0,
+      "legal_name": 1.0,
+      "trade_name": 1.0,
+      "address": 1.0,
+      "state": 1.0,
+      "pan": 1.0
+    },
+    "notes": "This is a synthetic specimen document for testing purposes."
+  }
+}

@@ -5,3 +5,16 @@ An automated vendor onboarding process built for the Zamp AI Solutions Analyst c
 ## How to run
 
 _To be filled in as we build._
+
+## Document reading and the demo cache
+
+Documents are read by Gemini (`EXTRACTOR_MODE=gemini` in `backend/.env`; `mock` reads the sample PDFs
+offline). The sample documents are **pre-read**: `backend/sample_data/extraction_cache/` is committed, so the
+demo does not depend on API quota or latency. Any newly uploaded document is read by Gemini live.
+
+- `python -m scripts.check_gemini` — which model is fast, reliable and has quota right now.
+- `python -m scripts.eval_extraction` — accuracy of the reader on the sample PDFs.
+- `python -m scripts.eval_extraction --save-seed` — rebuild the committed cache. Needed after changing
+  `GEMINI_MODEL` or the prompt version. The free Gemini tier allows roughly 20 requests per model per day,
+  and the 23 sample documents (21 distinct files) need about that many.
+

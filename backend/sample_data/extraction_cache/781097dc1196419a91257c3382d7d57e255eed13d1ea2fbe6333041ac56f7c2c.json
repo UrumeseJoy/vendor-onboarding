@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "v1",
+    "slot": "GST_CERTIFICATE"
+  },
+  "reading": {
+    "detected_type": "INVOICE",
+    "fields": {
+      "legal_name": "Greenfield Supplies Private Limited",
+      "gstin": "33AABCG4321H1Z4",
+      "invoice_number": "INV-2026-0457",
+      "invoice_date": "2026-03-14",
+      "buyer_name": "Greenfield Retail Private Limited",
+      "total_amount": "1,18,000.00"
+    },
+    "field_confidence": {
+      "legal_name": 1.0,
+      "gstin": 1.0,
+      "invoice_number": 1.0,
+      "invoice_date": 1.0,
+      "buyer_name": 1.0,
+      "total_amount": 1.0
+    },
+    "notes": "The document is clearly a tax invoice despite the vendor's claim."
+  }
+}

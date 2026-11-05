@@ -26,6 +26,8 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 15. Extraction caching: Gemini results are cached in backend/.cache/extraction/ keyed by file hash + claimed slot + model + prompt version (change llm.PROMPT_VERSION when a prompt changes). The same file never costs a second API call.
 16. REJECTED emails are never written by AI: they use a fixed neutral template and never state a reason. AI drafts (PENDING only) are built from missing_items alone and are discarded in favour of the template if they fail the safety check (a missing item's key words absent, a vendor ID, review_note text, "risk score" or "fraud").
 17. The API must run as a single process, because live run events are held in memory (run_events.py).
+18. Sample documents are pre-read: backend/sample_data/extraction_cache/ is a committed, read-only seed cache of Gemini's reading of every sample PDF (made with `python -m scripts.eval_extraction --save-seed`). Lookup order: runtime cache, then seed cache, then Gemini. So the demo does not depend on API quota or latency; any newly uploaded document is read by Gemini live. Seed entries are keyed by file hash + slot + model + prompt version, so after changing GEMINI_MODEL or llm.PROMPT_VERSION the seed must be regenerated.
+19. A document must show every field in rules.yaml `expected_fields` for its type. Because the reader leaves out what it cannot read (rather than guessing), a missing expected field fails EXTRACTION_CONFIDENCE and the vendor is asked for a clearer copy.
 
 ## Assumptions
 - Buyer is an Indian mid-size company. Vendors are from India (main) or USA.

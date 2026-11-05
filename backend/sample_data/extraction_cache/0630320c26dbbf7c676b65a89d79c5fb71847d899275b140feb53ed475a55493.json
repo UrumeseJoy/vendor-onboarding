@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "v1",
+    "slot": "GST_CERTIFICATE"
+  },
+  "reading": {
+    "detected_type": "GST_CERTIFICATE",
+    "fields": {
+      "gstin": "33AABCC4567N1ZF",
+      "legal_name": "Coromandel Packaging Private Limited",
+      "trade_name": "Coromandel Packaging Private Limited",
+      "address": "5 West Masi Street, Madurai, Tamil Nadu 625001",
+      "state": "Tamil Nadu",
+      "pan": "AABCC4567N"
+    },
+    "field_confidence": {
+      "gstin": 1.0,
+      "legal_name": 1.0,
+      "trade_name": 1.0,
+      "address": 1.0,
+      "state": 1.0,
+      "pan": 1.0
+    },
+    "notes": "This is a specimen document clearly marked as a synthetic test document."
+  }
+}

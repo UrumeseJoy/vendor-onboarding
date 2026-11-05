@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "v1",
+    "slot": "BANK_LETTER"
+  },
+  "reading": {
+    "detected_type": "BANK_LETTER",
+    "fields": {
+      "holder_name": "Lakeside Analytics LLC",
+      "account_number": "4412345678",
+      "routing_number": "123456780",
+      "bank_name": "Capital Bank of Texas"
+    },
+    "field_confidence": {
+      "holder_name": 1.0,
+      "account_number": 1.0,
+      "routing_number": 1.0,
+      "bank_name": 1.0
+    },
+    "notes": "The document is explicitly marked as a specimen and synthetic test document."
+  }
+}

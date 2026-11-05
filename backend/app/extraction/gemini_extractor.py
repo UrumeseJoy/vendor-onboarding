@@ -4,7 +4,8 @@
    in that text (ignoring case and spaces). A value that is not there is capped at confidence 0.5
    so later checks treat it as untrusted. Image-only PDFs keep Gemini's own confidence.
 2. A file-based cache keyed by file hash, claimed slot, model and prompt version, so the same file
-   never costs a second API call.
+   never costs a second API call. Lookup order: runtime cache (.cache/extraction), then the committed
+   read-only seed cache (sample_data/extraction_cache, the pre-read sample documents), then Gemini.
 
 If Gemini fails for any file the error is raised, so the pipeline marks EXTRACTION as FAILED and the
 vendor can never be approved on the back of a failed read.
@@ -20,7 +21,7 @@ import pymupdf
 from app import llm
 from app.extraction.mock_extractor import file_sha256
 from app.models import DocType, ExtractedDocument, UploadedDocument, VendorSubmission
-from app.settings import cache_dir
+from app.settings import cache_dir, seed_cache_dir
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +66,18 @@ def _cache_path(sha: str) -> Path:
     return cache_dir() / f"{sha}.json"
 
 
-def _cache_read(sha: str, slot: DocType) -> dict | None:
+def _read_cache_file(path: Path, slot: DocType) -> dict | None:
     try:
-        saved = json.loads(_cache_path(sha).read_text())
+        saved = json.loads(path.read_text())
     except (OSError, ValueError):
         return None
     return saved["reading"] if saved.get("meta") == _cache_meta(slot) else None
+
+
+def _cache_read(sha: str, slot: DocType) -> dict | None:
+    """Runtime cache first, then the committed seed cache (sample documents). Never written to."""
+    return (_read_cache_file(_cache_path(sha), slot)
+            or _read_cache_file(seed_cache_dir() / f"{sha}.json", slot))
 
 
 def _cache_write(sha: str, slot: DocType, reading: dict) -> None:

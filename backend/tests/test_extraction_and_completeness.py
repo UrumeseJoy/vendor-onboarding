@@ -114,3 +114,67 @@ def test_document_never_uploaded_still_gets_its_own_instruction():
     assert r.result == CheckResult.FAIL
     assert "GST registration certificate" in r.details["action_required"]
     assert "covered_by_doc_type_match" not in r.details
+
+
+# ---- expected fields per document type ----
+
+def cheque_of(case_id="01_happy_path"):
+    _, sub, docs = load_case(case_id)
+    return sub, docs, next(d for d in docs if d.slot == DocType.CANCELLED_CHEQUE)
+
+
+def test_cheque_missing_ifsc_fails_with_action_naming_ifsc():
+    _, docs, cheque = cheque_of()
+    del cheque.fields["ifsc"], cheque.field_confidence["ifsc"]
+    r = find(run_extraction_checks(docs), "EXTRACTION_CONFIDENCE", "cancelled_cheque.pdf")[0]
+    assert r.result == CheckResult.FAIL
+    assert "couldn't find the IFSC on cancelled_cheque.pdf" in r.reason
+    assert r.details["missing_fields"] == ["ifsc"]
+    assert "IFSC" in r.details["action_required"] and "cancelled cheque" in r.details["action_required"]
+
+
+def test_bank_letter_with_routing_number_but_no_ifsc_passes():
+    _, sub, docs = load_case("08_us_vendor")
+    letter = next(d for d in docs if d.slot == DocType.BANK_LETTER)
+    assert "ifsc" not in letter.fields and "routing_number" in letter.fields
+    assert find(run_extraction_checks(docs), "EXTRACTION_CONFIDENCE", "bank_letter.pdf")[0].result == CheckResult.PASS
+
+
+def test_bank_letter_with_neither_ifsc_nor_routing_fails():
+    _, sub, docs = load_case("08_us_vendor")
+    letter = next(d for d in docs if d.slot == DocType.BANK_LETTER)
+    del letter.fields["routing_number"], letter.field_confidence["routing_number"]
+    r = find(run_extraction_checks(docs), "EXTRACTION_CONFIDENCE", "bank_letter.pdf")[0]
+    assert r.result == CheckResult.FAIL and r.details["missing_fields"] == ["ifsc or routing_number"]
+    assert "IFSC or routing number" in r.reason
+
+
+def test_low_confidence_and_missing_fields_are_reported_together():
+    _, docs, cheque = cheque_of()
+    del cheque.fields["ifsc"], cheque.field_confidence["ifsc"]
+    cheque.field_confidence["account_number"] = 0.5
+    r = find(run_extraction_checks(docs), "EXTRACTION_CONFIDENCE", "cancelled_cheque.pdf")[0]
+    assert "clearly read the account number" in r.reason and "find the IFSC" in r.reason
+
+
+def test_wrong_type_or_invoice_documents_skip_the_expected_fields_check():
+    _, sub, docs = load_case("04_wrong_document")
+    invoice = next(d for d in docs if d.filename == "gst_certificate.pdf")
+    assert invoice.detected_type == DocType.INVOICE  # no gstin/legal_name on it, and that is fine here
+    assert find(run_extraction_checks(docs), "EXTRACTION_CONFIDENCE", "gst_certificate.pdf")[0].result == CheckResult.PASS
+
+
+def test_expected_fields_config_is_validated():
+    import pytest
+    from pydantic import ValidationError
+    from app.config import RulesConfig
+    from tests.test_config import raw_rules
+
+    data = raw_rules()
+    data["expected_fields"]["PAN_CARD"] = [[]]
+    with pytest.raises(ValidationError, match="non-empty"):
+        RulesConfig(**data)
+    data = raw_rules()
+    data["expected_fields"]["PASSPORT"] = [["pan"]]
+    with pytest.raises(ValidationError):
+        RulesConfig(**data)

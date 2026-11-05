@@ -3,10 +3,14 @@
 Run from the backend folder (needs GEMINI_API_KEY; results are cached, so re-runs are free):
     python -m scripts.eval_extraction
 
+With --save-seed, the results are also copied into sample_data/extraction_cache (committed), so the
+demo never depends on API quota or latency.
+
 Compares detected_type and every field against what each case's documents.json says is printed on
 the document. Exact match after trimming. Note the blurry scan is DESIGNED to be hard to read.
 """
 
+import argparse
 import json
 import sys
 import time
@@ -15,6 +19,33 @@ from app.demo_cases import CASES_DIR, load_index, load_submission
 from app.extraction.gemini_extractor import gemini_extract
 from app.llm import LLMError, model_name
 from app.storage import demo_files
+
+
+def save_seed() -> None:
+    """Copy the cached result of every sample PDF into the committed seed cache."""
+    import shutil
+    from app.extraction.gemini_extractor import _cache_meta, _cache_path
+    from app.extraction.mock_extractor import file_sha256
+    from app.settings import seed_cache_dir
+
+    seed_cache_dir().mkdir(parents=True, exist_ok=True)
+    saved = skipped = 0
+    for entry in load_index():
+        case_id = entry["case_id"]
+        for uploaded in load_submission(case_id).documents:
+            sha = file_sha256(CASES_DIR / case_id / "files" / uploaded.filename)
+            source = _cache_path(sha)
+            try:
+                meta = json.loads(source.read_text())["meta"]
+            except (OSError, ValueError, KeyError):
+                skipped += 1
+                continue
+            if meta != _cache_meta(uploaded.slot):  # read by another model / prompt version
+                skipped += 1
+                continue
+            shutil.copyfile(source, seed_cache_dir() / source.name)
+            saved += 1
+    print(f"\nSeed cache: saved {saved} documents to {seed_cache_dir()} ({skipped} skipped: not read yet or read by another model).")
 
 
 RATE_LIMIT_ATTEMPTS = 6
@@ -28,15 +59,19 @@ def read_case(case_id, submission):
         try:
             return gemini_extract(submission, demo_files(case_id, submission))
         except LLMError as error:
-            limited = "rate-limiting" in str(error)
-            if not limited or attempt == RATE_LIMIT_ATTEMPTS:
-                print(f"  ERROR: {error}")
+            if error.kind not in ("rate_limit", "overloaded") or attempt == RATE_LIMIT_ATTEMPTS:
+                print(f"  ERROR: {error}")  # includes a spent daily quota: waiting would not help
                 return None
-            print(f"  rate limited; waiting {RATE_LIMIT_PAUSE_SECONDS}s (attempt {attempt}/{RATE_LIMIT_ATTEMPTS})...", flush=True)
+            print(f"  Gemini {error.kind.replace('_', ' ')}; waiting {RATE_LIMIT_PAUSE_SECONDS}s "
+                  f"(attempt {attempt}/{RATE_LIMIT_ATTEMPTS})...", flush=True)
             time.sleep(RATE_LIMIT_PAUSE_SECONDS)
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--save-seed", action="store_true",
+                        help="afterwards copy every sample PDF's result into the committed seed cache")
+    args = parser.parse_args()
     type_ok = type_total = field_ok = field_total = 0
     mismatches, errors = [], []
     for entry in load_index():
@@ -81,6 +116,8 @@ def main() -> None:
         print(f"\n  Mismatches ({len(mismatches)}):")
         for line in mismatches:
             print(f"    - {line}")
+    if args.save_seed:
+        save_seed()
     sys.exit(1 if errors else 0)
 
 

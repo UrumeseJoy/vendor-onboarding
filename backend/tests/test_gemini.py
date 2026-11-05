@@ -383,3 +383,73 @@ def test_unrecognised_extractor_mode_never_uses_ai_for_email(monkeypatch):
     monkeypatch.setattr(llm, "draft_vendor_email", never_called)
     from app.demo_cases import run_demo_case
     assert run_demo_case("04_wrong_document").email.generated_by == "template"
+
+
+def test_seed_cache_is_used_after_the_runtime_cache_and_before_gemini(monkeypatch, tmp_path):
+    import shutil
+    from app.settings import cache_dir
+
+    case_id = "01_happy_path"
+    sub = load_submission(case_id)
+    files = demo_files(case_id, sub)
+
+    # fill a runtime cache with a fake Gemini, then move it to become the committed seed cache
+    calls = []
+    monkeypatch.setattr(llm, "extract_document", lambda pdf, slot: calls.append(1) or perfect_reply(pdf, slot))
+    first = gemini_extract(sub, files)
+    assert len(calls) == 3
+    seed = tmp_path / "seed"
+    shutil.copytree(cache_dir(), seed)
+    shutil.rmtree(cache_dir())
+
+    monkeypatch.setenv("SEED_CACHE_DIR", str(seed))
+    monkeypatch.setattr(llm, "extract_document", never_called)  # Gemini must not be needed any more
+    from_seed = gemini_extract(sub, files)
+    assert [d.model_dump() for d in from_seed] == [d.model_dump() for d in first]
+    assert not cache_dir().exists()  # the seed cache is read-only: nothing is written back to it or elsewhere
+    assert len(list(seed.iterdir())) == 3  # still just the three seeded files
+
+
+def test_seed_entry_for_another_model_is_ignored(monkeypatch, tmp_path):
+    import shutil
+    from app.settings import cache_dir
+
+    case_id = "01_happy_path"
+    sub = load_submission(case_id)
+    monkeypatch.setattr(llm, "extract_document", lambda pdf, slot: perfect_reply(pdf, slot))
+    gemini_extract(sub, demo_files(case_id, sub))
+    seed = tmp_path / "seed"
+    shutil.copytree(cache_dir(), seed)
+    shutil.rmtree(cache_dir())
+
+    monkeypatch.setenv("SEED_CACHE_DIR", str(seed))
+    monkeypatch.setenv("GEMINI_MODEL", "some-other-model")
+    calls = []
+    monkeypatch.setattr(llm, "extract_document", lambda pdf, slot: calls.append(1) or perfect_reply(pdf, slot))
+    gemini_extract(sub, demo_files(case_id, sub))
+    assert len(calls) == 3  # the seed was made with a different model, so Gemini is called
+
+
+def test_error_kinds_are_told_apart():
+    daily = FakeAPIError(429)
+    daily.__str__ = lambda: ""  # replaced below: str(error) is what is inspected
+    class Daily(FakeAPIError):
+        def __str__(self): return "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+    assert llm._error_kind(Daily(429)) == "daily_quota"
+    assert llm._error_kind(FakeAPIError(429)) == "rate_limit"
+    assert llm._error_kind(FakeAPIError(503)) == "overloaded"
+    assert llm._error_kind(FakeAPIError(400)) == "other"
+    assert llm.error_summary(Daily(429)) == "429 daily quota used up"
+
+
+def test_daily_quota_error_says_so(monkeypatch):
+    class Daily(FakeAPIError):
+        def __str__(self): return "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+    monkeypatch.setattr(llm, "_is_transient", lambda e: False)
+
+    def failing():
+        raise Daily(429)
+
+    with pytest.raises(llm.LLMError, match="daily request quota") as info:
+        llm._with_retries(failing, sleep=lambda s: None)
+    assert info.value.kind == "daily_quota"

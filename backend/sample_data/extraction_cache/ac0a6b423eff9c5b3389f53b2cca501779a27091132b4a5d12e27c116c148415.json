@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "v1",
+    "slot": "CANCELLED_CHEQUE"
+  },
+  "reading": {
+    "detected_type": "CANCELLED_CHEQUE",
+    "fields": {
+      "bank_name": "ICICI Bank",
+      "ifsc": "ICIC0002345",
+      "holder_name": "Malabar Spices Private Limited",
+      "account_number": "67120034567890"
+    },
+    "field_confidence": {
+      "bank_name": 1.0,
+      "ifsc": 1.0,
+      "holder_name": 1.0,
+      "account_number": 1.0
+    },
+    "notes": "This is a specimen cancelled cheque document."
+  }
+}

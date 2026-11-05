@@ -9,6 +9,7 @@ def offline_defaults(monkeypatch, tmp_path):
     monkeypatch.setenv("EXTRACTOR_MODE", "mock")
     monkeypatch.setenv("STAGE_DELAY_MS", "0")
     monkeypatch.setenv("CACHE_DIR", str(tmp_path / "extraction-cache"))
+    monkeypatch.setenv("SEED_CACHE_DIR", str(tmp_path / "no-seed-cache"))  # a test that wants one sets it
 
     def no_network(**kwargs):
         raise llm.LLMError("The network is disabled in tests; fake app.llm functions instead.")

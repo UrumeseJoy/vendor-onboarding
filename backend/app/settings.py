@@ -46,3 +46,9 @@ def cache_dir() -> Path:
     """Extraction cache. CACHE_DIR overrides the default (used by tests)."""
     path = Path(os.getenv("CACHE_DIR", "").strip() or ".cache/extraction")
     return path if path.is_absolute() else BACKEND_DIR / path
+
+
+def seed_cache_dir() -> Path:
+    """Committed, read-only cache of the sample documents (SEED_CACHE_DIR overrides it, for tests)."""
+    path = Path(os.getenv("SEED_CACHE_DIR", "").strip() or "sample_data/extraction_cache")
+    return path if path.is_absolute() else BACKEND_DIR / path

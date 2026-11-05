@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "v1",
+    "slot": "GST_CERTIFICATE"
+  },
+  "reading": {
+    "detected_type": "GST_CERTIFICATE",
+    "fields": {
+      "gstin": "33AABCS1234K1ZN",
+      "legal_name": "Sharma Electronics Private Limited",
+      "trade_name": "Sharma Electronics Private Limited",
+      "address": "14 Anna Salai, Chennai, Tamil Nadu 600002",
+      "state": "Tamil Nadu",
+      "pan": "AABCS1234K"
+    },
+    "field_confidence": {
+      "gstin": 1.0,
+      "legal_name": 1.0,
+      "trade_name": 1.0,
+      "address": 1.0,
+      "state": 1.0,
+      "pan": 1.0
+    },
+    "notes": "This is a synthetic specimen document."
+  }
+}

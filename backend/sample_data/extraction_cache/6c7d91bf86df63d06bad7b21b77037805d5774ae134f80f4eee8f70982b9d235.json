@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "v1",
+    "slot": "PAN_CARD"
+  },
+  "reading": {
+    "detected_type": "PAN_CARD",
+    "fields": {
+      "pan": "AABCM3456M",
+      "legal_name": "Malabar Spices Private Limited"
+    },
+    "field_confidence": {
+      "pan": 1.0,
+      "legal_name": 1.0
+    },
+    "notes": "The document is clearly marked as a specimen and synthetic test document."
+  }
+}

@@ -28,21 +28,38 @@ def check_doc_readable(doc: ExtractedDocument) -> CheckOutcome:
         {"filename": doc.filename, "detected": doc.detected_type.value})
 
 
+def missing_expected_fields(doc: ExtractedDocument) -> list[str]:
+    """Expected field groups with no field found on the document, e.g. ["ifsc"] or ["ifsc or routing_number"].
+    Only for documents that are what the vendor claimed (and are a type we have expectations for)."""
+    if doc.detected_type != doc.slot or doc.detected_type in (DocType.UNKNOWN, DocType.INVOICE):
+        return []
+    groups = get_rules().expected_fields.get(doc.detected_type, [])
+    return [" or ".join(group) for group in groups if not any(name in doc.fields for name in group)]
+
+
 def check_extraction_confidence(doc: ExtractedDocument) -> CheckOutcome:
     rules = get_rules().extraction
     low = {name: doc.field_confidence[name] for name in doc.field_confidence if name in untrusted_fields(doc)}
+    missing = missing_expected_fields(doc)
     low_overall = doc.overall_confidence < rules.min_document_confidence
-    if low or low_overall:
+    if low or missing or low_overall:
+        sentences = []
         if low:
             names = join_words([field_label(n) for n in low])
-            reason = f"We couldn't clearly read the {names} on {doc.filename}."
-        else:
-            reason = f"We couldn't clearly read {doc.filename}; the scan quality is too low."
+            sentences.append(f"We couldn't clearly read the {names} on {doc.filename}.")
+        if missing:
+            names = join_words([" or ".join(field_label(f) for f in group.split(" or ")) for group in missing])
+            sentences.append(f"We couldn't find the {names} on {doc.filename}.")
+        if not sentences:
+            sentences.append(f"We couldn't clearly read {doc.filename}; the scan quality is too low.")
+        action = f"Please upload a clearer photo or scan of your {action_label(doc.slot)}"
+        if missing:
+            shown = join_words([" or ".join(field_label(f) for f in group.split(" or ")) for group in missing])
+            action += f", making sure the {shown} can be seen clearly"
         return make_check(
-            "EXTRACTION_CONFIDENCE", Stage.EXTRACTION, CheckResult.FAIL, reason,
-            {"filename": doc.filename, "low_confidence_fields": low,
-             "overall_confidence": round(doc.overall_confidence, 2),
-             "action_required": f"Please upload a clearer photo or scan of your {action_label(doc.slot)}."})
+            "EXTRACTION_CONFIDENCE", Stage.EXTRACTION, CheckResult.FAIL, " ".join(sentences),
+            {"filename": doc.filename, "low_confidence_fields": low, "missing_fields": missing,
+             "overall_confidence": round(doc.overall_confidence, 2), "action_required": action + "."})
     return make_check(
         "EXTRACTION_CONFIDENCE", Stage.EXTRACTION, CheckResult.PASS,
         f"All values on {doc.filename} were read clearly.",

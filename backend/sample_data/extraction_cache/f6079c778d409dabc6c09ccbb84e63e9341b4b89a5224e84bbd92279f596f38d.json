@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "v1",
+    "slot": "GST_CERTIFICATE"
+  },
+  "reading": {
+    "detected_type": "GST_CERTIFICATE",
+    "fields": {
+      "gstin": "32AABCM3456M1ZF",
+      "legal_name": "Malabar Spices Private Limited",
+      "trade_name": "Malabar Spices Private Limited",
+      "address": "9 MG Road, Kochi, Kerala 682001",
+      "state": "Kerala",
+      "pan": "AABCM3456M"
+    },
+    "field_confidence": {
+      "gstin": 1.0,
+      "legal_name": 1.0,
+      "trade_name": 1.0,
+      "address": 1.0,
+      "state": 1.0,
+      "pan": 1.0
+    },
+    "notes": "This is a synthetic specimen document."
+  }
+}

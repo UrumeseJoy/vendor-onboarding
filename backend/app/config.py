@@ -58,6 +58,7 @@ class RulesConfig(BaseModel):
     name_match: NameMatchRules
     extraction: ExtractionRules
     risk: RiskRules
+    expected_fields: dict[DocType, list[list[str]]]  # per document type: groups, one field of each required
     check_severity: dict[str, Severity]  # check ID -> how serious a non-pass is
     gst_state_codes: dict[str, str]
 
@@ -69,6 +70,14 @@ class RulesConfig(BaseModel):
                     f"risk flag {flag} has severity {rule.severity.value} in risk.flags but "
                     f"{getattr(self.check_severity.get(flag), 'value', None)} in check_severity")
         return self
+
+    @field_validator("expected_fields")
+    @classmethod
+    def _expected_groups_not_empty(cls, v):
+        for doc_type, groups in v.items():
+            if not groups or any(not group for group in groups):
+                raise ValueError(f"expected_fields for {doc_type.value} must be a list of non-empty groups")
+        return v
 
     @field_validator("check_severity")
     @classmethod

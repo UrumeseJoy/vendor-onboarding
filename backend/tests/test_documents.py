@@ -54,3 +54,15 @@ def test_blurry_pdf_has_no_text_layer(case_id, entry):
     page = open_pdf(case_id, entry)[0]
     assert len(page.get_text().strip()) < 5
     assert page.get_images()  # it is an image-only page
+
+
+def test_invoice_prints_amounts_in_indian_digit_grouping():
+    text = pymupdf.open(CASES_DIR / "04_wrong_document" / "files" / "gst_certificate.pdf")[0].get_text()
+    expected = json.loads((CASES_DIR / "04_wrong_document" / "documents.json").read_text())[0]["fields"]["total_amount"]
+    assert expected == "INR 1,18,000.00" and expected in text
+
+
+def test_indian_digit_grouping():
+    from scripts.generate_documents import indian
+    assert [indian(x) for x in (5, 999.5, 1000, 118000, 1234567.891, 12345678)] == [
+        "5.00", "999.50", "1,000.00", "1,18,000.00", "12,34,567.89", "1,23,45,678.00"]

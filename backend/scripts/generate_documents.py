@@ -78,8 +78,22 @@ def rows(c, x, y, items, label_w=150, value_w=330, gap=8):
     return y
 
 
+def indian(amount: float) -> str:
+    """Indian digit grouping: 118000 -> 1,18,000.00 (the last 3 digits, then groups of 2)."""
+    whole, _, decimals = f"{amount:.2f}".partition(".")
+    head, tail = whole[:-3], whole[-3:]
+    groups = []
+    while len(head) > 2:
+        groups.insert(0, head[-2:])
+        head = head[:-2]
+    if head:
+        groups.insert(0, head)
+    return ",".join(groups + [tail]) + "." + decimals
+
+
 def money(amount: float) -> str:
-    return f"INR {amount:,.2f}"
+    # "INR", not the rupee sign: the built-in PDF font has no glyph for it
+    return f"INR {indian(amount)}"
 
 
 # ---------- One template per document type ----------
@@ -311,8 +325,8 @@ def invoice(f):
         y -= 20
         c.drawString(50, y, desc)
         c.drawRightString(350, y, str(qty))
-        c.drawRightString(440, y, f"{rate:,.2f}")
-        c.drawRightString(545, y, f"{qty * rate:,.2f}")
+        c.drawRightString(440, y, indian(rate))
+        c.drawRightString(545, y, indian(qty * rate))
     y -= 15
     c.line(50, y, 545, y)
     for label, value, bold in [("Subtotal", subtotal, False), ("GST @ 18%", gst, False), ("Total", total, True)]:

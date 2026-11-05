@@ -52,6 +52,17 @@ risk:
     BANK_COUNTRY_MISMATCH: {severity: SOFT, score: 30}    # bank is in a different country than the company
     DUPLICATE_BANK_ACCOUNT: {severity: HARD, score: 100}  # same bank account already used by another vendor
 
+# What must be readable on each type of document. Each inner list is one requirement: at least ONE
+# of the listed fields must be found on the document. If a requirement is not met (for example the
+# IFSC is missing from a cancelled cheque), the vendor is asked for a clearer copy. This matters
+# because the reader leaves out anything it cannot read rather than guessing.
+expected_fields:
+  GST_CERTIFICATE: [[gstin], [legal_name]]
+  PAN_CARD: [[pan], [legal_name]]
+  CANCELLED_CHEQUE: [[holder_name], [account_number], [ifsc]]
+  BANK_LETTER: [[holder_name], [account_number], [ifsc, routing_number]]
+  W9_FORM: [[legal_name], [ein]]
+
 # How serious it is when each check does not pass.
 # HARD = a serious problem (the vendor is rejected, or flagged for rejection).
 # SOFT = fixable (the vendor is put on hold, PENDING, and asked to correct it).
