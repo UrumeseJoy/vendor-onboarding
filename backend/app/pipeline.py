@@ -98,8 +98,11 @@ def _short_error(error: Exception) -> str:
 
 
 def run_pipeline(submission: VendorSubmission, vendor_id: str, extractor: Extractor,
-                 known_accounts: list[KnownAccount], on_stage: OnStage | None = None) -> PipelineRun:
-    run = PipelineRun(run_id=str(uuid.uuid4()), vendor_id=vendor_id, started_at=_now())
+                 known_accounts: list[KnownAccount], on_stage: OnStage | None = None,
+                 run_id: str | None = None, upload_id: str | None = None) -> PipelineRun:
+    """run_id can be chosen by the caller (so it can be returned before the run starts)."""
+    run = PipelineRun(run_id=run_id or str(uuid.uuid4()), vendor_id=vendor_id, started_at=_now(),
+                      upload_id=upload_id)
     outcomes: list[CheckOutcome] = []
     errored_stages: list[str] = []
     docs: list[ExtractedDocument] = []  # filled by the EXTRACTION stage; stays empty if it fails

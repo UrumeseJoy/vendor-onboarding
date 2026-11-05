@@ -219,3 +219,4 @@ class PipelineRun(BaseModel):
     stages: list[StageResult] = Field(default_factory=list)
     decision: Decision | None = None
     had_errors: bool = False
+    upload_id: str | None = None  # where the run's documents are stored ("demo:<case_id>" for demo cases)

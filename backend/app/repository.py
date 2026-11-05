@@ -3,9 +3,10 @@
 from collections import Counter
 from datetime import datetime, timezone
 
-from sqlmodel import Session, select
+from sqlalchemy.exc import IntegrityError
+from sqlmodel import Session, func, select
 
-from app.db import PipelineRunRecord, Vendor
+from app.db import PROCESSING, PipelineRunRecord, Vendor
 from app.models import KnownAccount, PipelineRun, VendorStatus, VendorSubmission, mask_account
 from app.security import last4, submission_fingerprint
 
@@ -16,6 +17,23 @@ def next_vendor_id(session: Session) -> str:
     existing = session.exec(select(Vendor.vendor_id).where(Vendor.vendor_id.like(f"{prefix}%"))).all()
     highest = max((int(v.removeprefix(prefix)) for v in existing), default=0)
     return f"{prefix}{highest + 1:04d}"
+
+
+def reserve_vendor(session: Session, submission: VendorSubmission, attempts: int = 5) -> str:
+    """Create the Vendor row now (status PROCESSING) so its ID is taken before the run finishes.
+    If two submissions grab the same ID at the same moment, the loser retries with the next one."""
+    for _ in range(attempts):
+        vendor_id = next_vendor_id(session)
+        now = datetime.now(timezone.utc)
+        session.add(Vendor(vendor_id=vendor_id, legal_name=submission.legal_name,
+                           country=submission.country.value, status=PROCESSING, risk_score=0,
+                           created_at=now, updated_at=now))
+        try:
+            session.commit()
+            return vendor_id
+        except IntegrityError:
+            session.rollback()
+    raise RuntimeError("Could not assign a vendor ID; please try again.")
 
 
 def save_run(session: Session, submission: VendorSubmission, run: PipelineRun) -> Vendor:
@@ -37,7 +55,7 @@ def save_run(session: Session, submission: VendorSubmission, run: PipelineRun) -
     session.add(PipelineRunRecord(
         run_id=run.run_id, vendor_id=run.vendor_id, run_number=run_number,
         started_at=run.started_at, finished_at=run.finished_at, status=status, risk_score=risk_score,
-        had_errors=run.had_errors, submission_json=masked_submission.model_dump_json(),
+        had_errors=run.had_errors, upload_id=run.upload_id, submission_json=masked_submission.model_dump_json(),
         run_json=run.model_dump_json()))
 
     vendor.legal_name = submission.legal_name
@@ -86,3 +104,7 @@ def status_counts(session: Session) -> dict[VendorStatus, int]:
     """How many vendors are in each status (by latest status)."""
     counts = Counter(session.exec(select(Vendor.status)).all())
     return {status: counts.get(status.value, 0) for status in VendorStatus}
+
+
+def count_runs(session: Session) -> int:
+    return session.exec(select(func.count()).select_from(PipelineRunRecord)).one()

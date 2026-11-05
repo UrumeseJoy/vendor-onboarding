@@ -15,6 +15,9 @@ load_dotenv(Path(__file__).parent.parent / ".env")  # backend/.env; does not ove
 
 DEFAULT_DATABASE_URL = "sqlite:///./vendor_onboarding.db"
 
+# Status of a vendor whose first run is still in progress (reserves its vendor ID).
+PROCESSING = "PROCESSING"
+
 
 class Vendor(SQLModel, table=True):
     """One row per vendor: its latest status plus pointers to its runs."""
@@ -41,6 +44,7 @@ class PipelineRunRecord(SQLModel, table=True):
     status: str
     risk_score: int
     had_errors: bool = False
+    upload_id: str | None = None  # where the run's documents are stored ("demo:<case_id>" for demo cases)
     submission_json: str  # the submission with the account number masked
     run_json: str         # the full PipelineRun
 

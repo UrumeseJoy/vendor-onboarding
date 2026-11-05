@@ -72,7 +72,8 @@ def seed_demo_cases(session) -> list[dict]:
         run = process_submission(
             session, load_submission(case_id),
             extractor=lambda submission, case_dir=case_dir: mock_extract(case_dir, submission),
-            vendor_id=vendor_ids[original] if original else None)
+            vendor_id=vendor_ids[original] if original else None,
+            upload_id=f"demo:{case_id}")
         vendor_ids[case_id] = run.vendor_id
         status = run.decision.status.value
         rows.append({"case_id": case_id, "vendor_id": run.vendor_id,
