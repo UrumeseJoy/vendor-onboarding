@@ -24,7 +24,9 @@
     --muted-foreground: #5F5F5F;     /* secondary text */
     --accent: #F7F7F7;
     --accent-foreground: #111111;
-    --border: #E5E5E5;
+    --border: #E2E2E2;
+    --border-strong: #C4C4C4;        /* secondary-button borders */
+    --sidebar: #F7F7F7;
     --input: #949494;                /* form-field borders: 3:1 against white */
 
     /* Brand red. Use sparingly: primary buttons, active nav, selected card, focus ring, small accents. */
@@ -48,8 +50,7 @@
     --internal-soft: #F2F2F2;
     --destructive: #9F1D24;          /* same crimson as rejected */
 
-    --radius: 0.75rem;
-    --card-shadow: 0 1px 2px rgb(17 17 17 / 0.06), 0 1px 3px rgb(17 17 17 / 0.04);
+    --radius: 2px;                   /* corners: 2px everywhere, never beyond 4px */
 }
 
 .dark {
@@ -66,6 +67,8 @@
     --accent: #262626;
     --accent-foreground: #F2F2F2;
     --border: #333333;
+    --border-strong: #4D4D4D;
+    --sidebar: #1A1A1A;
     --input: #6B6B6B;
 
     --primary: #D7262E;
@@ -86,8 +89,6 @@
     --internal: #ABABAB;
     --internal-soft: #262626;
     --destructive: #FF8A90;
-
-    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
 }
 
 @theme inline {
@@ -114,6 +115,8 @@
     --color-accent-foreground: var(--accent-foreground);
     --color-destructive: var(--destructive);
     --color-border: var(--border);
+    --color-border-strong: var(--border-strong);
+    --color-sidebar: var(--sidebar);
     --color-input: var(--input);
     --color-ring: var(--ring);
 
@@ -128,15 +131,14 @@
     --color-internal: var(--internal);
     --color-internal-soft: var(--internal-soft);
 
-    --shadow-card: var(--card-shadow);
-
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+    --radius-xs: 2px;
+    --radius-sm: 2px;
+    --radius-md: 2px;
+    --radius-lg: 2px;
+    --radius-xl: 4px;
+    --radius-2xl: 4px;
+    --radius-3xl: 4px;
+    --radius-4xl: 4px;
 }
 
 @layer base {
@@ -145,6 +147,8 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-size: 14px;
+    line-height: 1.5;
   }
   html {
     @apply font-sans;
@@ -157,6 +161,6 @@
     outline-offset: 2px;
   }
   h1, h2, h3 {
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
 }

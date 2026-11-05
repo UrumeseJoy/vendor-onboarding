@@ -1,24 +1,11 @@
 import type { ReactNode } from "react"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+import { Panel } from "@/components/Panel"
 
-export function Section({ title, description, icon, children, className, action }: {
-  title: ReactNode; description?: ReactNode; icon?: ReactNode; children: ReactNode; className?: string; action?: ReactNode
+/** A titled, bordered panel on the result page. */
+export function Section({ title, description, children, className, action, flush }: {
+  title: ReactNode; description?: ReactNode; icon?: ReactNode; children: ReactNode; className?: string
+  action?: ReactNode; flush?: boolean
 }) {
-  return (
-    <Card className={cn("gap-4", className)}>
-      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
-        <div>
-          <CardTitle className="flex items-center gap-2 text-base">
-            {icon}
-            {title}
-          </CardTitle>
-          {description && <CardDescription className="mt-1">{description}</CardDescription>}
-        </div>
-        {action}
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
-  )
+  return <Panel title={title} description={description} action={action} className={className} flush={flush}>{children}</Panel>
 }

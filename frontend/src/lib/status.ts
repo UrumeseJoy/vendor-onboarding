@@ -13,11 +13,11 @@ export interface StatusMeta {
 }
 
 export const TONE_PILL: Record<Tone, string> = {
-  approved: "bg-approved-soft text-approved border-approved/30",
-  pending: "bg-pending-soft text-pending border-pending/30",
-  rejected: "bg-rejected-soft text-rejected border-rejected",
-  processing: "bg-processing-soft text-processing border-processing/30",
-  neutral: "bg-muted text-muted-foreground border-border",
+  approved: "bg-approved-soft text-approved",
+  pending: "bg-pending-soft text-pending",
+  rejected: "bg-rejected-soft text-rejected",
+  processing: "bg-processing-soft text-processing",
+  neutral: "bg-secondary text-muted-foreground",
 }
 
 export const TONE_TEXT: Record<Tone, string> = {

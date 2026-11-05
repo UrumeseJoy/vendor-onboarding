@@ -1,85 +1,44 @@
-import { FilePlus2, RotateCcw, ShieldCheck } from "lucide-react"
+import { ChevronRight, FilePlus2 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router"
 
 import { ErrorBox, Loading, Mono, PageHeader } from "@/components/PageState"
 import { VendorStatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Panel } from "@/components/Panel"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useHealth } from "@/hooks/useHealth"
 import { api, type Stats, type VendorSummary } from "@/lib/api"
 import { relativeTime } from "@/lib/format"
 
 const REFRESH_MS = 5_000
 
-function StatTile({ label, value, tone }: { label: string; value: number; tone?: string }) {
+function SummaryCell({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
-    <Card className="[--card-spacing:--spacing(4)]">
-      <CardContent>
-        <div className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</div>
-        <div className={`mt-1 text-4xl font-bold tabular-nums ${tone ?? ""}`}>{value}</div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function ResetDemo({ onDone }: { onDone: () => void }) {
-  const [confirming, setConfirming] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const reset = async () => {
-    setBusy(true)
-    setError(null)
-    try {
-      await api.resetDemo()
-      setConfirming(false)
-      onDone()
-    } catch (e) {
-      setError((e as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  if (!confirming) {
-    return (
-      <Button variant="outline" onClick={() => setConfirming(true)}>
-        <RotateCcw className="size-4" aria-hidden /> Reset demo
-      </Button>
-    )
-  }
-  return (
-    <div className="flex flex-wrap items-center gap-2 rounded-full border border-rejected bg-rejected-soft px-4 py-1.5 text-sm">
-      <span className="text-rejected">Delete all vendors, runs and uploads?</span>
-      <Button size="sm" variant="destructive" onClick={reset} disabled={busy}>{busy ? "Resetting…" : "Yes, reset"}</Button>
-      <Button size="sm" variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>Cancel</Button>
-      {error && <span className="text-rejected">{error}</span>}
+    <div className="px-4 py-3">
+      <div className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">{label}</div>
+      <div className={`mt-1 text-[28px] leading-9 font-semibold tabular-nums ${tone ?? ""}`}>{value}</div>
     </div>
   )
 }
 
 function EmptyState() {
   return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-        <ShieldCheck className="size-10 text-brand" aria-hidden />
-        <h2 className="text-lg font-semibold">No vendors yet</h2>
-        <p className="max-w-md text-sm text-muted-foreground">
+    <Panel>
+      <div className="flex flex-col items-start gap-3 py-4">
+        <h2 className="text-[15px] font-semibold">No vendors yet</h2>
+        <p className="max-w-xl text-sm text-muted-foreground">
           Each vendor submission is checked in 8 stages (documents, formats, cross-checks and risk), then approved,
           put on hold or rejected, with every reason shown. Try a sample vendor to see it work.
         </p>
         <Button asChild>
           <Link to="/submit"><FilePlus2 className="size-4" aria-hidden /> New submission</Link>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </Panel>
   )
 }
 
 export function DashboardPage() {
-  const { health } = useHealth()
   const navigate = useNavigate()
   const [stats, setStats] = useState<Stats | null>(null)
   const [vendors, setVendors] = useState<VendorSummary[] | null>(null)
@@ -105,31 +64,27 @@ export function DashboardPage() {
   return (
     <div>
       <PageHeader
+        breadcrumb={[{ label: "Vendors" }]}
         title="Dashboard"
         description="Every vendor checked so far, with its latest status."
-        actions={
-          <>
-            {health?.demo_mode && <ResetDemo onDone={load} />}
-            <Button asChild><Link to="/submit"><FilePlus2 className="size-4" aria-hidden /> New submission</Link></Button>
-          </>
-        }
+        actions={<Button asChild><Link to="/submit"><FilePlus2 className="size-4" aria-hidden /> New submission</Link></Button>}
       />
       {error && <ErrorBox title="Could not load the dashboard" message={error} onRetry={load} />}
       {!stats || !vendors ? (
         !error && <Loading />
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <StatTile label="Total vendors" value={stats.total_vendors} />
-            <StatTile label="Approved" value={stats.status_counts.APPROVED} tone="text-approved" />
-            <StatTile label="Pending" value={stats.status_counts.PENDING} tone="text-pending" />
-            <StatTile label="Rejected" value={stats.status_counts.REJECTED} tone="text-rejected" />
-            <StatTile label="Total runs" value={stats.total_runs} />
+          <div className="grid grid-cols-2 divide-x divide-y overflow-hidden rounded-sm border bg-card sm:grid-cols-5 sm:divide-y-0">
+            <SummaryCell label="Total vendors" value={stats.total_vendors} />
+            <SummaryCell label="Approved" value={stats.status_counts.APPROVED} tone="text-approved" />
+            <SummaryCell label="Pending" value={stats.status_counts.PENDING} tone="text-pending" />
+            <SummaryCell label="Rejected" value={stats.status_counts.REJECTED} tone="text-rejected" />
+            <SummaryCell label="Total runs" value={stats.total_runs} />
           </div>
           {vendors.length === 0 ? (
             <EmptyState />
           ) : (
-            <Card className="py-0">
+            <Panel title="Vendors" flush>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -141,6 +96,7 @@ export function DashboardPage() {
                       <TableHead className="text-right">Risk</TableHead>
                       <TableHead className="text-right">Runs</TableHead>
                       <TableHead>Last updated</TableHead>
+                      <TableHead className="w-8"><span className="sr-only">Open</span></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -151,7 +107,7 @@ export function DashboardPage() {
                         onClick={() => navigate(`/vendors/${encodeURIComponent(v.vendor_id)}`)}
                       >
                         <TableCell>
-                          <Link to={`/vendors/${encodeURIComponent(v.vendor_id)}`} className="text-brand hover:underline" onClick={(e) => e.stopPropagation()}>
+                          <Link to={`/vendors/${encodeURIComponent(v.vendor_id)}`} className="text-foreground hover:underline" onClick={(e) => e.stopPropagation()}>
                             <Mono>{v.vendor_id}</Mono>
                           </Link>
                         </TableCell>
@@ -161,12 +117,13 @@ export function DashboardPage() {
                         <TableCell className="text-right tabular-nums">{v.risk_score}</TableCell>
                         <TableCell className="text-right tabular-nums">{v.run_count}</TableCell>
                         <TableCell className="text-muted-foreground">{relativeTime(v.updated_at)}</TableCell>
+                        <TableCell className="text-muted-foreground"><ChevronRight className="size-4" aria-hidden /></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
-            </Card>
+            </Panel>
           )}
         </div>
       )}

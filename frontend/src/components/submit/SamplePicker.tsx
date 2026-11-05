@@ -1,19 +1,20 @@
-import { ExternalLink, FileText, Play } from "lucide-react"
+import { ExternalLink, Play } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { ErrorBox, Loading, Mono } from "@/components/PageState"
 import { VendorStatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Panel } from "@/components/Panel"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { absoluteUrl, api, type DemoCase, type DemoCaseDetail } from "@/lib/api"
 import { DOC_LABELS } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 function Field({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
   return (
-    <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={cn("text-sm", mono && "font-mono", !value && "text-muted-foreground")}>{value || "—"}</div>
+    <div className="flex gap-3 border-b px-4 py-2 text-sm">
+      <dt className="w-32 shrink-0 text-[11px] leading-5 font-semibold tracking-wider text-muted-foreground uppercase">{label}</dt>
+      <dd className={cn("min-w-0 break-words", mono && "font-mono", !value && "text-muted-foreground")}>{value || "—"}</dd>
     </div>
   )
 }
@@ -22,58 +23,57 @@ function Preview({ detail, onRun, running }: { detail: DemoCaseDetail; onRun: ()
   const s = detail.submission
   const india = s.country === "IN"
   return (
-    <Card>
-      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
-        <div>
-          <CardTitle className="text-base">{s.legal_name}</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">{detail.description}</p>
-        </div>
+    <Panel
+      title={s.legal_name}
+      description={detail.description}
+      flush
+    >
+      <dl className="grid sm:grid-cols-2 sm:[&>div:nth-child(odd)]:border-r">
+        <Field label="Country" value={india ? "India" : "USA"} />
+        <Field label="State" value={s.state} />
+        <Field label="Contact email" value={s.contact_email} />
+        {india ? <Field label="PAN" value={s.pan} mono /> : <Field label="EIN" value={s.ein} mono />}
+        {india && <Field label="GSTIN" value={s.gstin} mono />}
+        <Field label="Account holder" value={s.bank.holder_name} />
+        <Field label="Account number" value={s.bank.account_number} mono />
+        <Field label={india ? "IFSC" : "Routing no."} value={india ? s.bank.ifsc : s.bank.routing_number} mono />
+        <div className="sm:col-span-2"><Field label="Address" value={s.address} /></div>
+      </dl>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>File name</TableHead>
+              <TableHead>Claimed type</TableHead>
+              <TableHead className="text-right">Document</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {detail.documents.map((d) => (
+              <TableRow key={d.filename}>
+                <TableCell><Mono>{d.filename}</Mono></TableCell>
+                <TableCell>{DOC_LABELS[d.slot]}</TableCell>
+                <TableCell className="text-right">
+                  <a
+                    href={absoluteUrl(d.file_url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-brand hover:underline"
+                  >
+                    View <ExternalLink className="size-3.5" aria-hidden />
+                  </a>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex justify-end border-t bg-muted px-4 py-3">
         <Button onClick={onRun} disabled={running}>
           <Play className="size-4" aria-hidden /> {running ? "Starting…" : "Run this sample"}
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Field label="Country" value={india ? "India" : "USA"} />
-          <Field label="State" value={s.state} />
-          <Field label="Contact email" value={s.contact_email} />
-          <div className="sm:col-span-2 lg:col-span-3"><Field label="Address" value={s.address} /></div>
-          {india ? (
-            <>
-              <Field label="PAN" value={s.pan} mono />
-              <Field label="GSTIN" value={s.gstin} mono />
-            </>
-          ) : (
-            <Field label="EIN" value={s.ein} mono />
-          )}
-          <Field label="Bank account holder" value={s.bank.holder_name} />
-          <Field label="Account number" value={s.bank.account_number} mono />
-          <Field label={india ? "IFSC" : "Routing number"} value={india ? s.bank.ifsc : s.bank.routing_number} mono />
-        </div>
-        <div>
-          <div className="mb-2 text-xs text-muted-foreground">Documents</div>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {detail.documents.map((d) => (
-              <li key={d.filename}>
-                <a
-                  href={absoluteUrl(d.file_url)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
-                >
-                  <FileText className="size-4 text-muted-foreground" aria-hidden />
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-medium">{DOC_LABELS[d.slot]}</span>
-                    <Mono className="block truncate text-xs text-muted-foreground">{d.filename}</Mono>
-                  </span>
-                  <ExternalLink className="size-3.5 text-muted-foreground" aria-hidden />
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </Panel>
   )
 }
 
@@ -98,8 +98,8 @@ export function SamplePicker({ onRun, running }: { onRun: (caseId: string) => vo
   if (!cases) return <Loading />
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-      <ul className="space-y-2" aria-label="Sample vendors">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+      <ul className="divide-y self-start overflow-hidden rounded-sm border bg-card" aria-label="Sample vendors">
         {cases.map((c) => (
           <li key={c.case_id}>
             <button
@@ -107,25 +107,23 @@ export function SamplePicker({ onRun, running }: { onRun: (caseId: string) => vo
               onClick={() => setSelected(c.case_id)}
               aria-pressed={selected === c.case_id}
               className={cn(
-                "w-full rounded-lg border border-l-4 border-l-border bg-card px-3 py-2.5 text-left shadow-card transition-colors hover:bg-muted",
-                selected === c.case_id && "border-primary border-l-primary bg-brand-tint ring-1 ring-primary hover:bg-brand-tint",
+                "grid w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-x-3 border-l-[3px] border-l-transparent px-3 py-2.5 text-left transition-colors hover:bg-muted",
+                selected === c.case_id && "border-l-primary bg-brand-tint hover:bg-brand-tint",
               )}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium">{c.title}</span>
-                <Mono className="text-xs text-muted-foreground">{c.case_id.slice(0, 2)}</Mono>
-              </div>
-              <p className="mt-0.5 text-xs text-muted-foreground">{c.description}</p>
-              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                Expected: <VendorStatusBadge status={c.expected_status} />
-              </div>
+              <Mono className="pt-px text-xs text-muted-foreground">{c.case_id.slice(0, 2)}</Mono>
+              <span className="min-w-0">
+                <span className="block font-semibold">{c.title}</span>
+                <span className="block truncate text-xs text-muted-foreground" title={c.description}>{c.description}</span>
+              </span>
+              <VendorStatusBadge status={c.expected_status} />
             </button>
           </li>
         ))}
       </ul>
       <div className="min-w-0">
         {!selected ? (
-          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Choose a sample vendor to see its form and documents.</CardContent></Card>
+          <Panel><p className="py-6 text-center text-sm text-muted-foreground">Choose a sample vendor to see its form and documents.</p></Panel>
         ) : detail?.case_id !== selected ? (
           <Loading /> // the previous sample's detail is never shown for a newly selected one
         ) : (

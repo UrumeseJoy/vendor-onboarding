@@ -3,10 +3,10 @@ export function ScoreBar({ score, warn, pass }: { score: number; warn: number; p
   const tone = score >= pass ? "bg-approved" : score >= warn ? "bg-pending" : "bg-rejected"
   return (
     <div className="w-full max-w-xs" aria-label={`Match score ${score} out of 100`}>
-      <div className="relative h-2 rounded-full bg-muted">
-        <div className={`h-2 rounded-full ${tone}`} style={{ width: `${Math.min(100, Math.max(0, score))}%` }} />
+      <div className="relative h-1.5 bg-secondary">
+        <div className={`h-1.5 ${tone}`} style={{ width: `${Math.min(100, Math.max(0, score))}%` }} />
         {[warn, pass].map((mark) => (
-          <span key={mark} className="absolute -top-1 h-4 w-px bg-foreground/50" style={{ left: `${mark}%` }} aria-hidden />
+          <span key={mark} className="absolute -top-0.5 h-2.5 w-px bg-foreground/50" style={{ left: `${mark}%` }} aria-hidden />
         ))}
       </div>
       <div className="relative mt-1 h-4 text-[10px] text-muted-foreground">

@@ -1,4 +1,4 @@
-import { CircleCheck, Mail, Pencil, Sparkles } from "lucide-react"
+import { CircleCheck, Pencil, Sparkles } from "lucide-react"
 import { useState } from "react"
 
 import { ErrorBox } from "@/components/PageState"
@@ -35,18 +35,17 @@ export function EmailPanel({ runId, email, onChange }: {
   }
 
   const label = email.generated_by === "ai"
-    ? <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"><Sparkles className="size-3" aria-hidden /> AI draft</span>
-    : <span className="rounded-full border px-2 py-0.5 text-xs">Template</span>
+    ? <span className="inline-flex items-center gap-1 rounded-sm bg-secondary px-1.5 py-0.5 text-xs font-semibold text-muted-foreground"><Sparkles className="size-3" aria-hidden /> AI draft</span>
+    : <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">Template</span>
 
   return (
     <Section
       title="Vendor email"
-      icon={<Mail className="size-4" />}
       description="Drafted for a person to check. Approving only marks it as sent: nothing is actually emailed."
       action={label}
     >
       {sent ? (
-        <p className="mb-3 flex items-center gap-2 rounded-md bg-approved-soft px-3 py-2 text-sm text-approved">
+        <p className="mb-3 flex items-center gap-2 rounded-sm bg-approved-soft px-3 py-2 text-sm text-approved">
           <CircleCheck className="size-4" aria-hidden />
           Approved and marked as sent {dateTime(email.approved_at)}{email.edited && " (edited before sending)"}.
         </p>
@@ -66,7 +65,7 @@ export function EmailPanel({ runId, email, onChange }: {
           </div>
         </div>
       ) : (
-        <div className="rounded-md border bg-muted/30 p-4">
+        <div className="rounded-sm border bg-muted p-4">
           <p className="font-medium">{email.subject}</p>
           <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{email.body}</p>
         </div>

@@ -35,11 +35,12 @@ export function SubmitPage() {
   return (
     <div>
       <PageHeader
+        breadcrumb={[{ label: "Vendors", to: "/" }, { label: resubmitFor ? "Resubmit" : "New submission" }]}
         title={resubmitFor ? "Resubmit documents" : "New submission"}
         description="Run a ready-made sample vendor, or fill in the form and upload PDFs yourself."
       />
       {resubmitFor && (
-        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-processing/30 bg-processing-soft px-4 py-3 text-sm text-processing">
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-sm border border-processing/40 bg-processing-soft px-4 py-2.5 text-sm text-processing">
           <RefreshCw className="size-4" aria-hidden />
           <span>
             Resubmitting for <Mono>{resubmitFor}</Mono>. The new run is added to this vendor's history.
@@ -49,7 +50,7 @@ export function SubmitPage() {
         </div>
       )}
       <Tabs defaultValue="sample">
-        <TabsList className="mb-4">
+        <TabsList>
           <TabsTrigger value="sample">Load sample vendor</TabsTrigger>
           <TabsTrigger value="upload">Upload your own</TabsTrigger>
         </TabsList>

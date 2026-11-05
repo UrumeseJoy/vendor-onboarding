@@ -27,9 +27,9 @@ export function FileDrop({ id, label, file, onChange }: {
 
   return (
     <div>
-      <div className="mb-1.5 text-sm font-medium">{label}</div>
+      <div className="mb-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">{label}</div>
       {file ? (
-        <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+        <div className="flex items-center gap-2 rounded-sm border px-3 py-2 text-sm">
           <FileText className="size-4 text-muted-foreground" aria-hidden />
           <span className="min-w-0 flex-1 truncate font-mono text-xs">{file.name}</span>
           <span className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</span>
@@ -44,7 +44,7 @@ export function FileDrop({ id, label, file, onChange }: {
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
           className={cn(
-            "flex cursor-pointer flex-col items-center gap-1 rounded-md border border-dashed px-3 py-4 text-center text-sm text-muted-foreground transition-colors hover:bg-muted",
+            "flex cursor-pointer flex-col items-center gap-1 rounded-sm border border-dashed border-border-strong px-3 py-4 text-center text-sm text-muted-foreground transition-colors hover:bg-muted",
             dragging && "border-primary bg-brand-tint",
           )}
         >

@@ -3,7 +3,7 @@ import { useState, type FormEvent, type ReactNode } from "react"
 
 import { ErrorBox } from "@/components/PageState"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Panel } from "@/components/Panel"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -105,80 +105,74 @@ export function UploadForm({ onSubmit, busy, serverError }: {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-6">
-      <Card>
-        <CardHeader><CardTitle className="text-base">Company</CardTitle></CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="country">Country</Label>
-            <Select value={country} onValueChange={(v) => changeCountry(v as Country)}>
-              <SelectTrigger id="country" className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="IN">India</SelectItem>
-                <SelectItem value="US">USA</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <TextField id="legal_name" label="Legal name" value={fields.legal_name} onChange={set} required />
-          <TextField id="contact_email" label="Contact email" type="email" value={fields.contact_email} onChange={set} required />
-          <TextField id="state" label="State" value={fields.state} onChange={set} required />
-          <div className="sm:col-span-2">
-            <TextField id="address" label="Address" value={fields.address} onChange={set} required />
-          </div>
-          {india ? (
-            <>
-              <TextField id="pan" label="PAN" value={fields.pan} onChange={set} mono hint="10 characters, like AABCS1234K" />
-              <TextField id="gstin" label="GSTIN" value={fields.gstin} onChange={set} mono hint="15 characters, like 33AABCS1234K1ZN" />
-            </>
-          ) : (
-            <TextField id="ein" label="EIN" value={fields.ein} onChange={set} mono hint="Like 84-1234567" />
-          )}
-        </CardContent>
-      </Card>
+    <form onSubmit={submit} className="space-y-4">
+      <Panel title="Company" bodyClassName="grid gap-4 p-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="country">Country</Label>
+          <Select value={country} onValueChange={(v) => changeCountry(v as Country)}>
+            <SelectTrigger id="country" className="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="IN">India</SelectItem>
+              <SelectItem value="US">USA</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <TextField id="legal_name" label="Legal name" value={fields.legal_name} onChange={set} required />
+        <TextField id="contact_email" label="Contact email" type="email" value={fields.contact_email} onChange={set} required />
+        <TextField id="state" label="State" value={fields.state} onChange={set} required />
+        <div className="sm:col-span-2">
+          <TextField id="address" label="Address" value={fields.address} onChange={set} required />
+        </div>
+      </Panel>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Bank account</CardTitle></CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <TextField id="holder_name" label="Account holder name" value={fields.holder_name} onChange={set} required />
-          <TextField id="account_number" label="Account number" value={fields.account_number} onChange={set} required mono
-            hint="Only the last 4 digits are ever shown after submission." />
-          {india ? (
-            <TextField id="ifsc" label="IFSC" value={fields.ifsc} onChange={set} mono hint="Like HDFC0001234" />
-          ) : (
-            <TextField id="routing_number" label="Routing number" value={fields.routing_number} onChange={set} mono hint="9 digits" />
-          )}
-          <div className="space-y-1.5">
-            <Label htmlFor="bank_country">Bank country</Label>
-            <Select value={bankCountry} onValueChange={(v) => setBankCountry(v as Country)}>
-              <SelectTrigger id="bank_country" className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="IN">India</SelectItem>
-                <SelectItem value="US">USA</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <Panel title="Tax" bodyClassName="grid gap-4 p-4 sm:grid-cols-2">
+        {india ? (
+          <>
+            <TextField id="pan" label="PAN" value={fields.pan} onChange={set} mono hint="10 characters, like AABCS1234K" />
+            <TextField id="gstin" label="GSTIN" value={fields.gstin} onChange={set} mono hint="15 characters, like 33AABCS1234K1ZN" />
+          </>
+        ) : (
+          <TextField id="ein" label="EIN" value={fields.ein} onChange={set} mono hint="Like 84-1234567" />
+        )}
+      </Panel>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Documents</CardTitle></CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {SLOTS[country].map((slot) => (
-            <div key={slot.key} className="space-y-2">
-              <FileDrop id={`file-${slot.key}`} label={slot.label} file={files[slot.key] ?? null}
-                onChange={(file) => setFiles((f) => ({ ...f, [slot.key]: file }))} />
-              {slot.options.length > 1 && (
-                <Select value={bankDocType} onValueChange={(v) => setBankDocType(v as DocType)}>
-                  <SelectTrigger className="w-full" aria-label="Type of bank document"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {slot.options.map((o) => <SelectItem key={o} value={o}>{DOC_LABELS[o]}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <Panel title="Bank" bodyClassName="grid gap-4 p-4 sm:grid-cols-2">
+        <TextField id="holder_name" label="Account holder name" value={fields.holder_name} onChange={set} required />
+        <TextField id="account_number" label="Account number" value={fields.account_number} onChange={set} required mono
+          hint="Only the last 4 digits are ever shown after submission." />
+        {india ? (
+          <TextField id="ifsc" label="IFSC" value={fields.ifsc} onChange={set} mono hint="Like HDFC0001234" />
+        ) : (
+          <TextField id="routing_number" label="Routing number" value={fields.routing_number} onChange={set} mono hint="9 digits" />
+        )}
+        <div className="space-y-1.5">
+          <Label htmlFor="bank_country">Bank country</Label>
+          <Select value={bankCountry} onValueChange={(v) => setBankCountry(v as Country)}>
+            <SelectTrigger id="bank_country" className="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="IN">India</SelectItem>
+              <SelectItem value="US">USA</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Panel>
+
+      <Panel title="Documents" bodyClassName="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
+        {SLOTS[country].map((slot) => (
+          <div key={slot.key} className="space-y-2">
+            <FileDrop id={`file-${slot.key}`} label={slot.label} file={files[slot.key] ?? null}
+              onChange={(file) => setFiles((f) => ({ ...f, [slot.key]: file }))} />
+            {slot.options.length > 1 && (
+              <Select value={bankDocType} onValueChange={(v) => setBankDocType(v as DocType)}>
+                <SelectTrigger className="w-full" aria-label="Type of bank document"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {slot.options.map((o) => <SelectItem key={o} value={o}>{DOC_LABELS[o]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        ))}
+      </Panel>
 
       {(problem || serverError) && (
         <ErrorBox title="The submission was not accepted" message={problem ?? serverError ?? ""} />

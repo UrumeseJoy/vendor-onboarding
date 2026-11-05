@@ -1,8 +1,9 @@
-import { ClipboardList, Lock, RefreshCw, Wifi } from "lucide-react"
+import { RefreshCw, Wifi } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router"
 
-import { ErrorBox, Loading, Mono } from "@/components/PageState"
+import { Breadcrumb, ErrorBox, Loading, Mono } from "@/components/PageState"
+import { Panel } from "@/components/Panel"
 import { ChecksPanel } from "@/components/run/ChecksPanel"
 import { DecisionHeader } from "@/components/run/DecisionHeader"
 import { DocumentsPanel } from "@/components/run/DocumentsPanel"
@@ -10,13 +11,12 @@ import { EmailPanel } from "@/components/run/EmailPanel"
 import { Section } from "@/components/run/Section"
 import { StageTimeline } from "@/components/run/StageTimeline"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { useRunStream } from "@/hooks/useRunStream"
 import { api, type RunDetail, type StageName, type StageResult } from "@/lib/api"
 
 function BulletList({ items }: { items: string[] }) {
   return (
-    <ul className="list-disc space-y-1.5 pl-5 text-sm">
+    <ul className="list-disc space-y-1 pl-5 text-sm">
       {items.map((item) => <li key={item}>{item}</li>)}
     </ul>
   )
@@ -32,11 +32,11 @@ function ConnectionNote({ connection }: { connection: string }) {
 function Result({ run, onEmailChange }: { run: RunDetail; onEmailChange: (run: RunDetail) => void }) {
   const decision = run.decision
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <DecisionHeader run={run} />
       {decision && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Section title="Why" icon={<ClipboardList className="size-4" />}>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Section title="Why">
             <BulletList items={decision.reasons} />
           </Section>
           {decision.status === "PENDING" ? (
@@ -61,9 +61,8 @@ function Result({ run, onEmailChange }: { run: RunDetail; onEmailChange: (run: R
           {decision.review_notes.length > 0 && (
             <Section
               title="Internal review notes"
-              icon={<Lock className="size-4" />}
               description="For the procurement team only. Never sent to the vendor."
-              className="border-internal/30 bg-internal-soft/40"
+              action={<span className="rounded-sm bg-secondary px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">Internal</span>}
             >
               <BulletList items={decision.review_notes} />
             </Section>
@@ -106,19 +105,21 @@ function RunView({ runId }: { runId: string }) {
     : stream.stages
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
-      <aside className="lg:sticky lg:top-20 lg:self-start">
-        <Card>
-          <CardContent className="space-y-3">
-            <div>
-              <h2 className="font-semibold">Pipeline</h2>
-              <p className="text-xs text-muted-foreground">Run <Mono>{runId.slice(0, 8)}</Mono></p>
-            </div>
+    <div>
+    <Breadcrumb
+      items={run
+        ? [{ label: "Vendors", to: "/" }, { label: run.vendor_id, to: `/vendors/${encodeURIComponent(run.vendor_id)}` }, { label: `Run ${run.run_number}` }]
+        : [{ label: "Vendors", to: "/" }, { label: `Run ${runId.slice(0, 8)}` }]}
+    />
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
+      <aside className="lg:sticky lg:top-[74px] lg:self-start">
+        <Panel title="Pipeline" description={<>Run <Mono>{runId.slice(0, 8)}</Mono></>}>
+          <div className="space-y-3">
             <ConnectionNote connection={stream.connection} />
             {stream.serverError && <p className="text-sm text-pending">{stream.serverError}</p>}
             <StageTimeline stages={stages} />
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
       </aside>
       <section className="min-w-0">
         {run ? (
@@ -130,13 +131,12 @@ function RunView({ runId }: { runId: string }) {
             onRetry={() => { setError(null); api.run(runId).then(setRun, (e: Error) => setError(e.message)) }}
           />
         ) : (
-          <Card>
-            <CardContent>
-              <Loading label={finished ? "Loading the result…" : "Checking this vendor… each stage appears on the left as it finishes."} />
-            </CardContent>
-          </Card>
+          <Panel>
+            <Loading label={finished ? "Loading the result…" : "Checking this vendor… each stage appears on the left as it finishes."} />
+          </Panel>
         )}
       </section>
+    </div>
     </div>
   )
 }

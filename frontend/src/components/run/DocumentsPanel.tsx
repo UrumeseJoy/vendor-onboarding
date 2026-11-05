@@ -1,4 +1,4 @@
-import { ArrowRight, ExternalLink, FileText } from "lucide-react"
+import { ArrowRight, ExternalLink } from "lucide-react"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { runDocumentUrl, type ExtractedDocument, type RunDetail, type VendorSubmission } from "@/lib/api"
@@ -42,13 +42,10 @@ function DocumentCard({ run, doc }: { run: RunDetail; doc: ExtractedDocument }) 
   const missing = missingFields(run, doc.filename)
   const minConfidence = run.thresholds.min_field_confidence
   return (
-    <div className="rounded-lg border">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+    <div className="overflow-hidden rounded-sm border">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted px-4 py-2">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="flex items-center gap-1.5 font-medium">
-            <FileText className="size-4 text-muted-foreground" aria-hidden />
-            <span className="font-mono text-sm">{doc.filename}</span>
-          </span>
+          <span className="font-mono text-sm font-semibold">{doc.filename}</span>
           <span className={cn("flex items-center gap-1 text-sm", typeMismatch ? "font-medium text-rejected" : "text-muted-foreground")}>
             Uploaded as {DOC_LABELS[doc.slot]} <ArrowRight className="size-3.5" aria-hidden /> read as {DOC_LABELS[doc.detected_type]}
             {typeMismatch && " (mismatch)"}
@@ -116,7 +113,6 @@ export function DocumentsPanel({ run }: { run: RunDetail }) {
   return (
     <Section
       title="Documents"
-      icon={<FileText className="size-4" />}
       description="What was read from each file, next to what the vendor typed. Highlighted rows were flagged by a check."
     >
       {run.documents.length === 0 ? (

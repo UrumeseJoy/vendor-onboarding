@@ -9,12 +9,12 @@ function Pill({ meta, size = "sm", spin }: { meta: StatusMeta; size?: "sm" | "lg
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border font-medium whitespace-nowrap",
-        size === "lg" ? "px-3.5 py-1.5 text-base" : "px-2 py-0.5 text-xs",
+        "inline-flex items-center gap-1 rounded-sm font-semibold whitespace-nowrap",
+        size === "lg" ? "px-2.5 py-1 text-sm" : "px-1.5 py-0.5 text-xs",
         TONE_PILL[meta.tone],
       )}
     >
-      <Icon className={cn(size === "lg" ? "size-5" : "size-3.5", spin && "animate-spin")} aria-hidden />
+      <Icon className={cn(size === "lg" ? "size-4" : "size-3", spin && "animate-spin")} aria-hidden />
       {meta.label}
     </span>
   )
