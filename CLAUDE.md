@@ -1,7 +1,7 @@
 # Vendor Onboarding — Project Context
 
 ## What this is
-An automated process that takes a vendor submission (form fields + uploaded PDF documents), verifies it, and returns a status — APPROVED, PENDING or REJECTED — with every reason visible. For anything not approved, it drafts a message to the vendor saying exactly what to fix. Built for the Zamp AI Solutions Analyst case study (PS-2). It must run live in an interview demo.
+An automated process that takes a vendor submission (form fields + uploaded PDF documents), verifies it, and returns a status — APPROVED, PENDING or REJECTED — with every reason visible. It also drafts a message to the vendor: PENDING vendors are told exactly what to fix, REJECTED vendors get a neutral message with no reason, and APPROVED vendors get a welcome. A person edits and approves every message; nothing is actually emailed. Built for the Zamp AI Solutions Analyst case study (PS-2). It must run live in an interview demo.
 
 ## How we work
 - We build in small numbered steps. Only do what the current step asks. Do not build ahead.
@@ -17,7 +17,7 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 6. Mask bank account numbers in the UI and logs (show only last 4 digits).
 7. Thresholds and required documents live in backend/app/rules.yaml, not hard-coded.
 8. Import PyMuPDF as `import pymupdf` (not `import fitz`).
-9. Every FAIL or WARN the vendor can fix must include details['action_required']: one plain-English instruction to the vendor (e.g. 'Please upload a clearer photo of your cancelled cheque.'). Vendor emails are built from these.
+9. Every FAIL or WARN the vendor can fix must include details['action_required']: one plain-English instruction to the vendor (e.g. 'Please upload a clearer photo of your cancelled cheque.'). PENDING vendor emails are built from these.
 10. Fields with confidence below min_field_confidence are untrusted. Later checks must skip untrusted fields rather than report them as mismatches.
 11. Fail safe: if any stage raises an error, that stage is marked FAILED with the error summary, the remaining stages still run where possible, and the final status can never be APPROVED — it becomes PENDING for manual review.
 12. Vendor-facing text comes only from action_required. Reasons and review_note are internal and must never be sent to the vendor.
@@ -36,7 +36,7 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 - India requires: GST certificate, PAN card, cancelled cheque or bank letter. USA requires: W-9 form and bank letter.
 - Bank ownership is verified against the uploaded cheque/bank letter (production would use penny-drop verification).
 - GSTIN is verified by format, checksum and PAN consistency (production would call the GSTN API).
-- Vendor emails are drafted, then approved by a human before sending.
+- Vendor emails (all three outcomes) are drafted, then edited if needed and approved by a human ("Approve & mark as sent"). Nothing is actually emailed.
 
 ## Pipeline (8 stages, in order)
 1. Intake — validate form, assign vendor ID (format VND-2026-0001), save raw submission
@@ -46,7 +46,7 @@ An automated process that takes a vendor submission (form fields + uploaded PDF 
 5. Cross-checks — PAN inside GSTIN, GST state code vs address state, fuzzy name match (form vs bank holder vs documents), document fields vs form fields
 6. Risk flags — free email domain, bank country differs from company country, bank account already used by another vendor
 7. Decision — severity applies only to FAIL results. Any HARD FAIL (any stage) → REJECTED. SOFT FAILs in the RISK stage do NOT individually cause PENDING; they add their score to risk_score (capped at 100), and risk_score ≥ risk.review_threshold → PENDING. Any other SOFT FAIL or any WARN → PENDING. Otherwise → APPROVED. A WARN never rejects.
-8. Vendor message — Gemini drafts an email listing exactly what to fix (or a welcome email)
+8. Vendor message — APPROVED: fixed welcome template. REJECTED: fixed neutral template, no reason, never AI. PENDING: a Gemini draft listing exactly the action_required items, used only if it passes the safety check, otherwise a template (also in mock mode or if Gemini fails).
 
 ## Key rules
 - PAN: ^[A-Z]{5}[0-9]{4}[A-Z]$ (4th char = holder type, C for company)
@@ -77,5 +77,5 @@ Every check in the project must use exactly these IDs:
 - PDFs: PyMuPDF / pdfplumber for text, Gemini for scanned images and structured extraction
 - Fuzzy matching: RapidFuzz
 - Tests: pytest — at least one test per rule and per edge case
-- Frontend (later): React + Vite + Tailwind + shadcn/ui — pages: Submit, Live Run, Result, Dashboard
+- Frontend: React + Vite + Tailwind + shadcn/ui — pages: Submit, Live run + Result, Dashboard, Vendor detail
 - Deploy (later): Render (backend), Vercel (frontend)

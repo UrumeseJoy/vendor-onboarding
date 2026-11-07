@@ -4,8 +4,8 @@ Built for the Zamp AI Solutions Analyst case study (PS-2).
 
 **What it does**
 - Takes a vendor submission (form fields plus PDF documents), runs it through 8 stages of checks, and returns **APPROVED, PENDING or REJECTED** with every reason visible.
-- AI reads the documents and drafts emails. **It never makes the decision**: every check and the final status are plain, deterministic Python.
-- For anything not approved, it drafts a message telling the vendor exactly what to fix. A person approves it before it goes out.
+- AI reads the documents and drafts emails for pending vendors. **It never makes the decision**: every check and the final status are plain, deterministic Python.
+- Every vendor gets a drafted message: pending vendors are told exactly what to fix, rejected vendors get a neutral message with no reason, and approved vendors get a welcome. A person can edit and must approve each one; nothing is actually emailed in this demo.
 
 **Live demo:** _link to be added after deployment_
 
@@ -20,7 +20,7 @@ Onboarding a vendor means checking a form against a stack of documents (tax regi
 - **Duplicate vendors:** the same bank account registered under two vendor names.
 - **Back-and-forth delays:** a wrong or unreadable document, discovered days later, with a vague "please resend".
 
-The goal is a process that is fast, explains every decision, and asks the vendor for exactly what is missing.
+The goal is a process that is fast, explains every decision to the team, and, when a problem is fixable, asks the vendor for exactly what is missing.
 
 ## Assumptions
 
@@ -32,7 +32,7 @@ The goal is a process that is fast, explains every decision, and asks the vendor
 | USA requires | W-9 form and a bank letter |
 | Bank ownership | Checked against the uploaded cheque or bank letter (production would use penny-drop verification) |
 | GSTIN | Checked by format, checksum and PAN consistency (production would call the GSTN API) |
-| Vendor emails | Drafted by the system, approved by a human before sending. In this demo, "approve" only marks the email as sent; nothing is emailed |
+| Vendor emails | Drafted by the system (all three outcomes), edited if needed and approved by a human ("Approve & mark as sent"). In this demo, approving only marks the email as sent; nothing is emailed |
 
 ## How it works
 
@@ -50,8 +50,8 @@ flowchart TD
     G -->|any other fail, warning,<br/>or risk score 30+| P[PENDING]
     G -->|all clear| OK[APPROVED]
     R --> H[8. Vendor message<br/>fixed template, no reasons]
-    P --> I[8. Vendor message<br/>lists exactly what to fix]
-    OK --> J[8. Vendor message<br/>welcome]
+    P --> I[8. Vendor message<br/>AI draft or template,<br/>lists what to fix]
+    OK --> J[8. Vendor message<br/>fixed welcome template]
 ```
 
 Every check returns a structured result (check ID, stage, PASS / FAIL / WARN, severity, plain-English reason) and every stage result is stored, so any decision can be explained later.
@@ -61,13 +61,15 @@ Every check returns a structured result (check ID, stage, PASS / FAIL / WARN, se
 | Outcome | When |
 |---|---|
 | **REJECTED** | Any **HARD** FAIL in any stage (for example bank holder name does not match, PAN inside GSTIN differs, bank account already used) |
-| **PENDING** | Any **SOFT** FAIL (fixable, such as a wrong or unreadable document), any **WARN** (for example a name score of 75 to 89), or a **risk score of 30 or more** |
+| **PENDING** | Any **SOFT** FAIL outside the risk stage (fixable, such as a wrong or unreadable document), any **WARN** (for example a name score of 75 to 89), a **risk score of 30 or more**, or a processing error |
 | **APPROVED** | None of the above |
 
 - A WARN never rejects.
 - **Risk flags add up.** Each adds to a risk score (capped at 100): free email domain 15, bank country differs from company country 30, duplicate bank account 100. One weak signal alone does not block a vendor; at 30 or more the vendor goes to a person.
 - **Names:** after normalising ("Pvt Ltd" becomes "Private Limited", punctuation and case removed), a score of 90 or more passes, 75 to 89 is a WARN, below 75 is a HARD FAIL.
 - **Fail safe:** if any stage crashes, it is marked FAILED, the other stages still run, and the final status can never be APPROVED. It becomes PENDING for a person to look at.
+- **Confidence:** a value read with confidence below 0.80 is untrusted and is never compared; a document averaging below 0.70 is also sent back for a clearer copy.
+- **Duplicate bank accounts:** a vendor whose latest run was rejected for `DUPLICATE_BANK_ACCOUNT` does not count as holding the account (it copied one that was not its own, and counting it would get the real owner rejected). A vendor rejected for any other reason, such as a bank name mismatch, still holds its account, because reuse is suspicious.
 - All thresholds, required documents and per-check severities live in [backend/app/rules.yaml](backend/app/rules.yaml), not in code.
 
 ### Where AI is used, and where it is not
@@ -76,12 +78,22 @@ Every check returns a structured result (check ID, stage, PASS / FAIL / WARN, se
 |---|---|
 | Reading fields from PDFs and photos | Documents vary in layout and quality; this is what AI is good at |
 | Classifying the document type | Catches "an invoice uploaded as a GST certificate" |
-| Drafting the vendor email for PENDING cases | Natural wording; built only from the list of missing items |
+| Drafting the vendor email for PENDING cases (Gemini mode only) | Natural wording; built only from the list of items the vendor must fix |
 
 | AI is **not** used for | Why |
 |---|---|
 | Any check or the final status | A decision must be the same every time and explainable to an auditor. AI output can change between runs |
 | REJECTED emails | A fixed template that states no reason, so nothing sensitive or wrong can be sent |
+
+### Vendor messages
+
+| Outcome | Email | Written by |
+|---|---|---|
+| **APPROVED** | Welcome | Fixed template |
+| **PENDING** | Lists exactly what the vendor must fix, from the `action_required` items only (if there is nothing for the vendor to fix, a short "we are reviewing" note) | A Gemini draft that passes a safety check; otherwise a template listing the same items. The template is also used in mock mode or if Gemini fails |
+| **REJECTED** | Neutral: no reason, and the vendor is **not** told what to fix | Fixed template, never AI |
+
+For all three, a person can edit the email and must approve it ("Approve & mark as sent"). Nothing is actually emailed.
 
 All Gemini calls live in one file, [backend/app/llm.py](backend/app/llm.py).
 
@@ -108,8 +120,8 @@ Each sample case is a set of generated PDFs. Run them from the Submit page.
 4. **Text-layer verification of AI output.** When a PDF has a text layer, every value the AI extracts must appear in that text. A value that is not found is capped at confidence 0.5, so it becomes untrusted. This catches an AI misreading or inventing a value.
 5. **Expected fields per document type.** `rules.yaml` lists what must be readable on each document (for example IFSC on a cancelled cheque). **The case 06 story:** the blurry cheque was designed to come back with low confidence. In the real Gemini run the model did something more careful: it left the IFSC out rather than guess. Missing data does not lower any confidence score, so a confidence check alone would have passed it. The expected-fields rule closes that gap: the vendor is told "We couldn't find the IFSC on cancelled_cheque.pdf" and asked for a clearer scan.
 6. **Fail safe to PENDING.** An error in any stage can never produce APPROVED.
-7. **Vendor-facing text comes only from `action_required`.** Every fixable FAIL or WARN carries one plain-English instruction for the vendor. Internal reasons and review notes are never sent to the vendor.
-8. **Rejection emails are never written by AI.** They use a fixed neutral template and never state a reason. AI drafts (PENDING only) are checked before use: if a draft leaves out a missing item or mentions a vendor ID, internal review text, "risk score" or "fraud", it is discarded and the template is used.
+7. **Vendor-facing text comes only from `action_required`.** Every fixable FAIL or WARN carries one plain-English instruction for the vendor, and these build the PENDING email. Internal reasons and review notes are never sent to the vendor, and a rejected vendor is told nothing about why.
+8. **Rejection emails are never written by AI.** They use a fixed neutral template and never state a reason. AI drafts (PENDING only) are checked before use: if a draft leaves out a missing item or mentions a vendor ID, internal review text, "risk score" or "fraud", it is discarded and the template is used (as it is in mock mode or if Gemini fails).
 9. **Prompt-injection handling.** Text inside an uploaded document is treated as data. The extraction prompt tells the model to ignore any instructions in a document, and even if it did not, the model only returns fields: it has no way to set a status, because the decision is code.
 10. **The demo extraction cache.** The sample documents are pre-read: [backend/sample_data/extraction_cache/](backend/sample_data/extraction_cache/) is a committed cache of Gemini's reading of every sample PDF, so the demo does not depend on API quota or latency. Any newly uploaded document is read by Gemini live. Only sample documents are ever cached; a real vendor's upload is never written to disk by the cache, because its fields include a bank account number.
 
@@ -130,7 +142,7 @@ The two field misses, from `eval_extraction`:
 - Case 04 invoice: the total came back as `1,18,000.00` where the document prints `INR 1,18,000.00` (the currency prefix was dropped; the invoice is not used for any check).
 - Case 06 blurry cheque: the IFSC was left out (by design, see decision 5).
 
-Note the Gemini figures come from the cached readings of the sample PDFs, not a fresh API run. The sample documents are synthetic and cleaner than real scans, so accuracy on real vendor documents will differ.
+Note the Gemini figures come from the cached readings of the sample PDFs, not a fresh API run (run with the API key blanked, so the vendor emails fell back to templates; statuses do not depend on emails). The sample documents are synthetic and cleaner than real scans, so accuracy on real vendor documents will differ.
 
 ## Limitations and what I would build next
 
@@ -148,7 +160,7 @@ Note the Gemini figures come from the cached readings of the sample PDFs, not a 
 
 ## How to run locally
 
-You need Python 3.11+ and Node 20+. Run the backend and the frontend in two terminals.
+Developed with Python 3.14 and Node 24. Run the backend and the frontend in two terminals.
 
 **Backend** (must run as a single process):
 
