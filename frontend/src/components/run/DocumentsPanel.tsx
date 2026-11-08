@@ -51,14 +51,18 @@ function DocumentCard({ run, doc }: { run: RunDetail; doc: ExtractedDocument }) 
             {typeMismatch && " (mismatch)"}
           </span>
         </div>
-        <a
-          href={runDocumentUrl(run.run_id, doc.filename)}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"
-        >
-          View PDF <ExternalLink className="size-3.5" aria-hidden />
-        </a>
+        {run.document_available?.[doc.filename] === false ? (
+          <span className="text-sm text-muted-foreground">Document no longer available</span>
+        ) : (
+          <a
+            href={runDocumentUrl(run.run_id, doc.filename)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"
+          >
+            View PDF <ExternalLink className="size-3.5" aria-hidden />
+          </a>
+        )}
       </div>
       <div className="overflow-x-auto">
         <Table>

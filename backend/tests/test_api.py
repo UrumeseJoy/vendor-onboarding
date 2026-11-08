@@ -13,8 +13,8 @@ ACCOUNT_NUMBERS = {load_submission(e["case_id"]).bank.account_number for e in lo
 
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
-    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path}/api.db")
+def client(tmp_path, monkeypatch, db_url):
+    monkeypatch.setenv("DATABASE_URL", db_url)
     monkeypatch.setenv("STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("STAGE_DELAY_MS", "0")
     monkeypatch.setenv("EXTRACTOR_MODE", "mock")
@@ -78,7 +78,8 @@ def checks_of(run: dict) -> list[dict]:
 # ---------- basics ----------
 
 def test_health(client):
-    assert client.get("/api/health").json() == {"status": "ok", "extractor_mode": "mock", "demo_mode": False}
+    assert client.get("/api/health").json() == {"status": "ok", "extractor_mode": "mock", "demo_mode": False,
+                                                 "reset_requires_token": False}
 
 
 def test_demo_cases_listed(client):

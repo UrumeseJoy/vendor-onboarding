@@ -78,4 +78,4 @@ Every check in the project must use exactly these IDs:
 - Fuzzy matching: RapidFuzz
 - Tests: pytest — at least one test per rule and per edge case
 - Frontend: React + Vite + Tailwind + shadcn/ui — pages: Submit, Live run + Result, Dashboard, Vendor detail
-- Deploy (later): Render (backend), Vercel (frontend)
+- Deploy: Render (backend, `render.yaml`), Vercel (frontend, `frontend/vercel.json`), Postgres via DATABASE_URL (postgres:// and postgresql:// are converted to the psycopg driver). Steps are in DEPLOY.md. Reset demo needs X-Admin-Token when ADMIN_TOKEN is set.

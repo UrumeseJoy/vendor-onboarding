@@ -42,6 +42,15 @@ def demo_mode() -> bool:
     return os.getenv("DEMO_MODE", "false").strip().lower() == "true"
 
 
+def admin_token() -> str:
+    """Secret for admin actions (reset demo). Empty = no token needed (local use)."""
+    return os.getenv("ADMIN_TOKEN", "").strip()
+
+
+def reset_requires_token() -> bool:
+    return demo_mode() and bool(admin_token())
+
+
 def cache_dir() -> Path:
     """Extraction cache. CACHE_DIR overrides the default (used by tests)."""
     path = Path(os.getenv("CACHE_DIR", "").strip() or ".cache/extraction")

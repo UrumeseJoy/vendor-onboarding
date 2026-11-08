@@ -104,6 +104,7 @@ export interface RunDetail {
   upload_id: string | null
   email: VendorEmail | null
   documents: ExtractedDocument[]
+  document_available: Record<string, boolean> // false once an uploaded file has gone from the server
   run_number: number
   submission: VendorSubmission
   thresholds: { name_pass: number; name_warn: number; min_field_confidence: number }
@@ -113,6 +114,7 @@ export interface Health {
   status: string
   extractor_mode: string
   demo_mode: boolean
+  reset_requires_token: boolean // ADMIN_TOKEN is set on the server
 }
 
 export interface DemoCase {
@@ -243,7 +245,11 @@ export const api = {
   approveEmail: (runId: string, edits?: { subject?: string; body?: string }) =>
     request<VendorEmail>(`/api/runs/${encodeURIComponent(runId)}/email/approve`, json(edits ?? {})),
 
-  resetDemo: () => request<{ deleted_vendors: number; deleted_runs: number }>("/api/admin/reset-demo", json({})),
+  resetDemo: (adminToken?: string) =>
+    request<{ deleted_vendors: number; deleted_runs: number }>("/api/admin/reset-demo", {
+      ...json({}),
+      headers: { "Content-Type": "application/json", ...(adminToken ? { "X-Admin-Token": adminToken } : {}) },
+    }),
 }
 
 export const eventsUrl = (runId: string) => `${API_URL}/api/runs/${encodeURIComponent(runId)}/events`

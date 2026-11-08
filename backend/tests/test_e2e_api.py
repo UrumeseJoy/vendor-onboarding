@@ -25,8 +25,8 @@ def read_stream(client, run_id) -> list[tuple[str, dict]]:
     return events
 
 
-def test_all_demo_cases_end_to_end_through_the_api(tmp_path, monkeypatch):
-    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path}/e2e.db")
+def test_all_demo_cases_end_to_end_through_the_api(tmp_path, monkeypatch, db_url):
+    monkeypatch.setenv("DATABASE_URL", db_url)
     monkeypatch.setenv("STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("DEMO_MODE", "true")
 

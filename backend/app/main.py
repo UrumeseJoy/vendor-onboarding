@@ -8,16 +8,19 @@ submissions are masked before they are sent.
 """
 
 import asyncio
+import hmac
 import json
+import logging
 import shutil
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, delete
 from sse_starlette.sse import EventSourceResponse
 
@@ -32,21 +35,34 @@ from app.repository import (
 )
 from app.run_events import registry
 from app.service import VendorNotFound, submit_in_background
-from app.settings import demo_mode, extractor_mode, frontend_origins, storage_dir
+from app.settings import (
+    admin_token, demo_mode, extractor_mode, frontend_origins, reset_requires_token, storage_dir,
+)
 from app.storage import (
     MAX_FILE_BYTES, UploadError, demo_files, document_path, match_submission_files, save_uploads,
     validate_uploads,
 )
 
+logger = logging.getLogger(__name__)
+
 SSE_POLL_SECONDS = 0.05
+SSE_PING_SECONDS = 15  # keeps the connection alive through proxies
+# Tell proxies (nginx, Render) not to cache or buffer the stream, or the live view would arrive in one lump.
+SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     engine = get_engine()
-    init_db(engine)
-    with Session(engine) as session:
-        recover_interrupted_vendors(session)  # runs from before a restart can never finish
+    try:
+        init_db(engine)
+        with Session(engine) as session:
+            recover_interrupted_vendors(session)  # runs from before a restart can never finish
+    except SQLAlchemyError as error:
+        # Say what is wrong without echoing anything from the connection string (it holds the password).
+        logger.error("Cannot start: the database is not reachable or not usable (%s). "
+                     "Check the DATABASE_URL setting and that the database is running.", type(error).__name__)
+        raise RuntimeError("Database connection failed; see the log above.") from None
     app.state.engine = engine
     yield
     engine.dispose()
@@ -137,7 +153,8 @@ def _run_summary(r: PipelineRunRecord) -> dict:
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "extractor_mode": extractor_mode(), "demo_mode": demo_mode()}
+    return {"status": "ok", "extractor_mode": extractor_mode(), "demo_mode": demo_mode(),
+            "reset_requires_token": reset_requires_token()}
 
 
 @app.get("/api/demo-cases")
@@ -205,7 +222,7 @@ async def run_events(run_id: str, request: Request, session: SessionDep):
                 if finished or await request.is_disconnected():
                     return
                 await asyncio.sleep(SSE_POLL_SECONDS)
-        return EventSourceResponse(live())
+        return EventSourceResponse(live(), ping=SSE_PING_SECONDS, headers=SSE_HEADERS)
 
     run = get_run(session, run_id)  # no longer in memory: replay the saved result
     if run is None:
@@ -217,7 +234,7 @@ async def run_events(run_id: str, request: Request, session: SessionDep):
         yield {"event": "done", "data": json.dumps({
             "run_id": run.run_id, "vendor_id": run.vendor_id,
             "decision": run.decision.model_dump(mode="json") if run.decision else None})}
-    return EventSourceResponse(replay())
+    return EventSourceResponse(replay(), ping=SSE_PING_SECONDS, headers=SSE_HEADERS)
 
 
 @app.get("/api/runs/{run_id}")
@@ -229,6 +246,9 @@ def get_run_detail(run_id: str, session: SessionDep):
     rules = get_rules()
     return {
         **run.model_dump(mode="json"),
+        # Uploads live on temporary disk and can vanish on a redeploy; sample documents never do.
+        "document_available": {d.filename: document_path(record.upload_id, d.filename) is not None
+                               for d in run.documents},
         "run_number": record.run_number,
         "submission": json.loads(record.submission_json),  # stored with the account number masked
         "thresholds": {"name_pass": rules.name_match.pass_threshold, "name_warn": rules.name_match.warn_threshold,
@@ -247,9 +267,11 @@ def get_run_document(run_id: str, filename: str, session: SessionDep):
         if meta is None:
             raise HTTPException(404, f"Run '{run_id}' not found.")
         upload_id, filenames = meta.get("upload_id"), meta.get("filenames", [])
-    path = document_path(upload_id, filename) if filename in filenames else None
-    if path is None:
+    if filename not in filenames:
         raise HTTPException(404, f"Document '{filename}' not found for run '{run_id}'.")
+    path = document_path(upload_id, filename)
+    if path is None:  # it belongs to this run but the file is gone (temporary disk)
+        raise HTTPException(410, "Document no longer available.")
     return FileResponse(path, media_type="application/pdf", filename=filename)
 
 
@@ -302,10 +324,13 @@ def approve_email(run_id: str, session: SessionDep, edits: EmailApproval | None 
 
 
 @app.post("/api/admin/reset-demo")
-def reset_demo(session: SessionDep):
-    """Delete all vendors, runs and uploads (keeps the extraction cache). Only when DEMO_MODE=true."""
+def reset_demo(session: SessionDep, x_admin_token: Annotated[str | None, Header()] = None):
+    """Delete all vendors, runs and uploads (keeps the extraction cache). Only when DEMO_MODE=true,
+    and, if ADMIN_TOKEN is set, only with that token in the X-Admin-Token header."""
     if not demo_mode():
         raise HTTPException(403, "Resetting is only allowed when DEMO_MODE=true.")
+    if admin_token() and not hmac.compare_digest((x_admin_token or "").encode(), admin_token().encode()):
+        raise HTTPException(403, "The admin token is missing or wrong.")
     runs = session.exec(delete(PipelineRunRecord)).rowcount
     vendors_deleted = session.exec(delete(Vendor)).rowcount
     session.commit()

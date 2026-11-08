@@ -17,8 +17,8 @@ YEAR = datetime.now(timezone.utc).year
 
 
 @pytest.fixture
-def session(tmp_path):
-    engine = get_engine(f"sqlite:///{tmp_path}/test.db")
+def session(db_url):
+    engine = get_engine(db_url)
     init_db(engine)
     with Session(engine) as s:
         yield s

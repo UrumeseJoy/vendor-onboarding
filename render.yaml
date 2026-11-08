@@ -1,0 +1,33 @@
+# Render Blueprint for the backend. The frontend is deployed separately on Vercel (see DEPLOY.md).
+services:
+  - type: web
+    name: vendor-onboarding-api
+    runtime: python
+    rootDir: backend
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # One worker only: live run events are held in memory (CLAUDE.md rule 17).
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.6          # the version the tests were run on; every pinned package has a Linux wheel for it
+      - key: GEMINI_API_KEY
+        sync: false            # secret: set in the Render dashboard
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: EXTRACTOR_MODE
+        value: gemini
+      - key: DATABASE_URL
+        sync: false            # secret: the Postgres connection string
+      - key: ACCOUNT_HASH_KEY
+        sync: false            # secret: keys the bank-account fingerprints
+      - key: ADMIN_TOKEN
+        sync: false            # secret: needed to use Reset demo
+      - key: FRONTEND_ORIGINS
+        sync: false            # the Vercel URL, e.g. https://your-app.vercel.app
+      - key: DEMO_MODE
+        value: "true"
+      - key: STAGE_DELAY_MS
+        value: "400"
