@@ -7,7 +7,8 @@ Built for the Zamp AI Solutions Analyst case study (PS-2).
 - AI reads the documents and drafts emails for pending vendors. **It never makes the decision**: every check and the final status are plain, deterministic Python.
 - Every vendor gets a drafted message: pending vendors are told exactly what to fix, rejected vendors get a neutral message with no reason, and approved vendors get a welcome. A person can edit and must approve each one; nothing is actually emailed in this demo.
 
-**Live demo:** _link to be added after deployment_
+**Live demo:** https://vendor-onboarding-green.vercel.app
+(Backend API: https://vendor-onboarding-api-uvah.onrender.com. It runs on a free tier and may take about 50 seconds to wake after idle.)
 
 ---
 
