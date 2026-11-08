@@ -1,14 +1,16 @@
 # Vendor Onboarding Automation
 
+**Live demo:** https://vendor-onboarding-green.vercel.app
+(Backend API: https://vendor-onboarding-api-uvah.onrender.com. It runs on a free tier and may take about 50 seconds to wake after idle.)
+
+This is a public demo with no login. Please use the sample cases and do not upload real documents.
+
 Built for the Zamp AI Solutions Analyst case study (PS-2).
 
 **What it does**
 - Takes a vendor submission (form fields plus PDF documents), runs it through 8 stages of checks, and returns **APPROVED, PENDING or REJECTED** with every reason visible.
 - AI reads the documents and drafts emails for pending vendors. **It never makes the decision**: every check and the final status are plain, deterministic Python.
 - Every vendor gets a drafted message: pending vendors are told exactly what to fix, rejected vendors get a neutral message with no reason, and approved vendors get a welcome. A person can edit and must approve each one; nothing is actually emailed in this demo.
-
-**Live demo:** https://vendor-onboarding-green.vercel.app
-(Backend API: https://vendor-onboarding-api-uvah.onrender.com. It runs on a free tier and may take about 50 seconds to wake after idle.)
 
 ---
 
@@ -153,10 +155,10 @@ Note the Gemini figures come from the cached readings of the sample PDFs, not a 
 | GSTIN checked by format, checksum and PAN only | **GSTN API lookup**: confirm the registration exists, is active, and matches the name |
 | No sanctions or blocklist check | **Sanctions and adverse-media screening** |
 | Submissions come through a web form | **Email intake**: vendors reply to a mailbox and the process starts on its own |
-| SQLite locally | **Postgres with migrations** |
-| Uploaded files stored on local disk | **Persistent file storage** (object storage) |
+| Postgres is used when deployed, but there are no schema migrations yet | **Postgres with migrations** |
+| Uploaded files live on the host's disk, which is wiped on restart/redeploy on the free tier | **Persistent file storage** (object storage) |
 | Live run events held in memory, so the API must be a single process | **Multi-worker event bus** (Redis) |
-| No login | **Authentication and roles** for reviewers and approvers |
+| Only Reset demo is protected (admin token); everything else is open | **Authentication and roles** for reviewers and approvers |
 | "Approve" does not send an email | Connect to a real mail provider |
 
 ## How to run locally
